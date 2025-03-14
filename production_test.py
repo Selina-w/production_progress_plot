@@ -10,20 +10,25 @@ import tempfile
 import os
 import zipfile
 
-# Define the font file path (Ensure it's in the same directory as your script)
-font_path = os.path.join(os.path.dirname(__file__), "SimHei.ttf")
+# Define font path
+font_path = "SimHei.ttf"  # Ensure this is the correct path
 
-# Check if the font file exists before loading
+# Verify if the font exists
 if os.path.exists(font_path):
     fm.fontManager.addfont(font_path)  # Register font
-    custom_font = fm.FontProperties(fname=font_path)  # Create a FontProperties object
-    plt.rcParams['font.sans-serif'] = [custom_font.get_name()]  # Set font globally
-    print(f"✅ Using custom font: {custom_font.get_name()}")
+    custom_font = fm.FontProperties(fname=font_path)
+    
+    # Force Matplotlib to use the new font
+    plt.rcParams['font.sans-serif'] = [custom_font.get_name()]
+    plt.rcParams['font.family'] = custom_font.get_name()
+    plt.rcParams['axes.unicode_minus'] = False  # Ensure negative numbers display correctly
+    
+    print(f"✅ Using font: {custom_font.get_name()}")
 else:
-    print("⚠️ Chinese font not found! Please check the font path.")
+    print("❌ Font file NOT found! Check the file path.")
 
-plt.rcParams['axes.unicode_minus'] = False
-plt.rcParams['font.family'] = 'sans-serif'
+#plt.rcParams['axes.unicode_minus'] = False
+#plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['figure.dpi'] = 300
 plt.rcParams['savefig.dpi'] = 300
 plt.rcParams['path.simplify'] = False  # Don't simplify paths for better quality
