@@ -13,7 +13,7 @@ import matplotlib as mpl
 
 # 设置中文字体和高质量渲染
 mpl.font_manager.fontManager.addfont('SimHei.ttf')
-plt.rcParams['font.sans-serif'] = [‘SimHei’]
+plt.rcParams['font.sans-serif'] = ['SimHei']
 plt.rcParams['axes.unicode_minus'] = False
 plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['figure.dpi'] = 300
