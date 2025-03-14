@@ -11,7 +11,7 @@ import os
 import zipfile
 
 # Define font path
-font_path = "SimHei.ttf"  # Ensure this is the correct path
+font_path = "simhei.ttf"  # Ensure this is the correct path
 
 # Verify if the font exists
 if os.path.exists(font_path):
