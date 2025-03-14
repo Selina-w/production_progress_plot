@@ -11,8 +11,8 @@ import os
 import zipfile
 import matplotlib as mpl
 
-# Ensure the font file is accessible
-font_path = "simhei.ttf"  # Make sure this file exists in the same directory
+# Ensure the correct font path (Assumes simhei.ttf is in the same directory)
+font_path = os.path.abspath("simhei.ttf")  # Ensures absolute path
 
 if os.path.exists(font_path):
     fm.fontManager.addfont(font_path)  # Register the font
