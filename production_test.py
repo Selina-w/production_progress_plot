@@ -29,10 +29,25 @@ plt.rcParams['text.usetex'] = False  # Disable LaTeX by default
 plt.style.use('default')  # Reset to default style for clean rendering
 
 # 检查字体是否可用
-font_names = [f.name for f in fm.fontManager.ttflist]
-chinese_fonts = [f for f in font_names if any(name in f for name in ['PingFang', 'Microsoft', 'SimHei', 'Arial Unicode'])]
-if chinese_fonts:
-    plt.rcParams['font.sans-serif'] = chinese_fonts[0]
+# List of Chinese fonts to try
+chinese_font_candidates = ["PingFang HK", "Microsoft YaHei", "SimHei", "Arial Unicode MS", "Songti SC", "WenQuanYi Zen Hei"]
+
+# Get available fonts in the system
+available_fonts = [f.name for f in fm.fontManager.ttflist]
+
+# Find the first available font from the candidates
+selected_font = None
+for font in chinese_font_candidates:
+    if font in available_fonts:
+        selected_font = font
+        break
+
+# If a Chinese font is found, apply it
+if selected_font:
+    plt.rcParams['font.sans-serif'] = [selected_font]
+    print(f"Using font: {selected_font}")
+else:
+    print("No Chinese font found! Please install one.")
 
 # 部门工序定义
 def get_department_steps(process_type=None):
