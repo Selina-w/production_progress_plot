@@ -11,9 +11,8 @@ import os
 import zipfile
 import matplotlib as mpl
 
-plt.rcParams['font.sans-serif'] = ['SimHei']
-
-#plt.rcParams['font.family'] = custom_font.get_name()  # Apply the font globally
+plt.rcParams['font.sans-serif'] = ['PingFang HK', 'Songti SC', 'Arial Unicode MS']
+plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['axes.unicode_minus'] = False  # Fix minus signs
 plt.rcParams['figure.dpi'] = 300
 plt.rcParams['savefig.dpi'] = 300
