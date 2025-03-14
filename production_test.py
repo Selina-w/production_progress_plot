@@ -24,7 +24,7 @@ else:
     print("⚠️ Chinese font not found! Please check the font path.")
     
 plt.rcParams['axes.unicode_minus']=False#用来正常显示负号
-plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['font.family'] = custom_font.get_name()
 plt.rcParams['figure.dpi'] = 300
 plt.rcParams['savefig.dpi'] = 300
 plt.rcParams['path.simplify'] = False  # Don't simplify paths for better quality
