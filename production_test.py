@@ -12,7 +12,7 @@ import zipfile
 import matplotlib as mpl
 
 plt.rcParams['font.sans-serif'] = ['PingFang HK', 'Songti SC', 'Arial Unicode MS']
-plt.rcParams['font.family'] = 'sans-serif'
+#plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['axes.unicode_minus'] = False  # Fix minus signs
 plt.rcParams['figure.dpi'] = 300
 plt.rcParams['savefig.dpi'] = 300
@@ -30,7 +30,7 @@ plt.style.use('default')  # Reset to default style for clean rendering
 
 # 检查字体是否可用
 font_names = [f.name for f in fm.fontManager.ttflist]
-chinese_fonts = [f for f in font_names if any(name in f for name in ['PingFang', 'Microsoft', 'Arial Unicode'])]
+chinese_fonts = [f for f in font_names if any(name in f for name in ['PingFang', 'Microsoft', 'SimHei', 'Arial Unicode'])]
 if chinese_fonts:
     plt.rcParams['font.sans-serif'] = chinese_fonts[0]
     print(chinese_fonts[0])
