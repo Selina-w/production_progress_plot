@@ -9,26 +9,12 @@ import io
 import tempfile
 import os
 import zipfile
+import matplotlib as mpl
 
-# Define font path
-font_path = "simhei.ttf"  # Ensure this is the correct path
-
-# Verify if the font exists
-if os.path.exists(font_path):
-    fm.fontManager.addfont(font_path)  # Register font
-    custom_font = fm.FontProperties(fname=font_path)
-    
-    # Force Matplotlib to use the new font
-    plt.rcParams['font.sans-serif'] = [custom_font.get_name()]
-    plt.rcParams['font.family'] = custom_font.get_name()
-    plt.rcParams['axes.unicode_minus'] = False  # Ensure negative numbers display correctly
-    
-    print(f"✅ Using font: {custom_font.get_name()}")
-else:
-    print("❌ Font file NOT found! Check the file path.")
-
-#plt.rcParams['axes.unicode_minus'] = False
-#plt.rcParams['font.family'] = 'sans-serif'
+mpl.font_manager.fontManager.addfont('simhei.ttf') 
+plt.rcParams['font.sans-serif']=['simhei'] #用来正常显示中文标签
+plt.rcParams['axes.unicode_minus']=False#用来正常显示负号
+plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['figure.dpi'] = 300
 plt.rcParams['savefig.dpi'] = 300
 plt.rcParams['path.simplify'] = False  # Don't simplify paths for better quality
