@@ -11,18 +11,13 @@ import os
 import zipfile
 import matplotlib as mpl
 
-font_path = os.path.join(os.path.dirname(__file__), "simhei.ttf")
+if os.path.exists("simhei.ttf"):
+    fm.fontManager.addfont("simhei.ttf")
+    custom_font = fm.FontProperties(fname="simhei.ttf")
+    plt.rcParams['font.sans-serif'] = [custom_font.get_name()]
+    plt.rcParams['font.family'] = custom_font.get_name()
 
-# Check if the font file exists before loading
-if os.path.exists(font_path):
-    fm.fontManager.addfont(font_path)  # Register font
-    custom_font = fm.FontProperties(fname=font_path)  # Create a FontProperties object
-    plt.rcParams['font.sans-serif'] = [custom_font.get_name()]  # Set font globally
-    print(f"✅ Using custom font: {custom_font.get_name()}")
-else:
-    print("⚠️ Chinese font not found! Please check the font path.") 
-
-plt.rcParams['font.family'] = custom_font.get_name()  # Apply the font globally
+#plt.rcParams['font.family'] = custom_font.get_name()  # Apply the font globally
 plt.rcParams['axes.unicode_minus'] = False  # Fix minus signs
 plt.rcParams['figure.dpi'] = 300
 plt.rcParams['savefig.dpi'] = 300
