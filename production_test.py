@@ -396,7 +396,7 @@ def plot_timeline(schedule, process_type, confirmation_period):
     # 设置标题
     title_text = f"生产流程时间表 - {process_type}"
     if "style_number" in st.session_state and st.session_state["style_number"]:
-        style_number_text = "款号: " + "".join(char + "\u0332" for char in str(st.session_state["style_number"]))
+        style_number_text = "款号: " + str(st.session_state["style_number"])
         # 将款号分成每行最多30个字符
         style_number_wrapped = [style_number_text[i:i+30] for i in range(0, len(style_number_text), 30)]
         title_text += "\n" + "\n".join(style_number_wrapped)
