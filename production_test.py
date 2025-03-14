@@ -9,11 +9,19 @@ import io
 import tempfile
 import os
 import zipfile
-import matplotlib as mpl
 
-# 设置中文字体和高质量渲染
-mpl.font_manager.fontManager.addfont('SimHei.ttf')
-plt.rcParams['font.sans-serif'] = ['SimHei']
+# Define the font file path (Ensure it's in the same directory as your script)
+font_path = os.path.join(os.path.dirname(__file__), "SimHei.ttf")
+
+# Check if the font file exists before loading
+if os.path.exists(font_path):
+    fm.fontManager.addfont(font_path)  # Register font
+    custom_font = fm.FontProperties(fname=font_path)  # Create a FontProperties object
+    plt.rcParams['font.sans-serif'] = [custom_font.get_name()]  # Set font globally
+    print(f"✅ Using custom font: {custom_font.get_name()}")
+else:
+    print("⚠️ Chinese font not found! Please check the font path.")
+
 plt.rcParams['axes.unicode_minus'] = False
 plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['figure.dpi'] = 300
