@@ -11,7 +11,8 @@ import os
 import zipfile
 
 # 设置中文字体和高质量渲染
-plt.rcParams['font.sans-serif'] = ['PingFang HK', 'Microsoft YaHei', 'SimHei', 'Arial Unicode MS']  # Try multiple Chinese fonts
+mpl.font_manager.fontManager.addfont('SimHei.ttf')
+plt.rcParams['font.sans-serif'] = [‘SimHei’]
 plt.rcParams['axes.unicode_minus'] = False
 plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['figure.dpi'] = 300
@@ -28,26 +29,6 @@ plt.rcParams['text.hinting_factor'] = 8  # Sharper text
 plt.rcParams['text.usetex'] = False  # Disable LaTeX by default
 plt.style.use('default')  # Reset to default style for clean rendering
 
-# 检查字体是否可用
-# List of Chinese fonts to try
-chinese_font_candidates = ["PingFang HK", "Microsoft YaHei", "SimHei", "Arial Unicode MS", "Songti SC", "WenQuanYi Zen Hei"]
-
-# Get available fonts in the system
-available_fonts = [f.name for f in fm.fontManager.ttflist]
-
-# Find the first available font from the candidates
-selected_font = None
-for font in chinese_font_candidates:
-    if font in available_fonts:
-        selected_font = font
-        break
-
-# If a Chinese font is found, apply it
-if selected_font:
-    plt.rcParams['font.sans-serif'] = [selected_font]
-    print(f"Using font: {selected_font}")
-else:
-    print("No Chinese font found! Please install one.")
 
 # 部门工序定义
 def get_department_steps(process_type=None):
