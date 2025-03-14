@@ -9,6 +9,7 @@ import io
 import tempfile
 import os
 import zipfile
+import matplotlib as mpl
 
 # 设置中文字体和高质量渲染
 mpl.font_manager.fontManager.addfont('SimHei.ttf')
