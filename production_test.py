@@ -11,11 +11,7 @@ import os
 import zipfile
 import matplotlib as mpl
 
-if os.path.exists("simhei.ttf"):
-    fm.fontManager.addfont("simhei.ttf")
-    custom_font = fm.FontProperties(fname="simhei.ttf")
-    plt.rcParams['font.sans-serif'] = [custom_font.get_name()]
-    plt.rcParams['font.family'] = custom_font.get_name()
+plt.rcParams['font.sans-serif'] = ['SimHei']
 
 #plt.rcParams['font.family'] = custom_font.get_name()  # Apply the font globally
 plt.rcParams['axes.unicode_minus'] = False  # Fix minus signs
