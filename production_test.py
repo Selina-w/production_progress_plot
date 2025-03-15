@@ -48,6 +48,10 @@ arial_unicode_prop = fm.FontProperties(fname=arial_unicode_path)
 #fm.fontManager.addfont(simhei_path)
 #fm.fontManager.addfont(arial_unicode_path)
 # ✅ Get all fonts Matplotlib recognizes
+fm._load_fontmanager()  # Reload Matplotlib font cache
+
+# Check again
+st.write("After forcing reload, available fonts:", [f.name for f in fm.fontManager.ttflist])
 font_names = sorted(set(f.name for f in fm.fontManager.ttflist))
 
 # ✅ Display in Streamlit
