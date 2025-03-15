@@ -619,6 +619,48 @@ st.title("生产流程时间管理系统")
 if "all_styles" not in st.session_state:
     st.session_state["all_styles"] = []
 
+# 添加Excel上传功能
+st.subheader("方式一：上传Excel文件")
+uploaded_file = st.file_uploader("上传Excel文件 (必需列：款号、缝纫开始时间、工序、确认周转周期)", type=['xlsx', 'xls'])
+
+if uploaded_file is not None:
+    try:
+        df = pd.read_excel(uploaded_file)
+        required_columns = ['款号', '缝纫开始时间', '工序', '确认周转周期']
+        
+        # Check if all required columns exist
+        if not all(col in df.columns for col in required_columns):
+            st.error(f"Excel文件必须包含以下列：{', '.join(required_columns)}")
+        else:
+            # Convert dates to datetime if they aren't already
+            df['缝纫开始时间'] = pd.to_datetime(df['缝纫开始时间']).dt.date
+            
+            # Validate process types
+            valid_processes = ["满花+局花+绣花", "满花+局花", "满花+绣花", "局花+绣花"]
+            invalid_processes = df[~df['工序'].isin(valid_processes)]['工序'].unique()
+            if len(invalid_processes) > 0:
+                st.error(f"发现无效的工序类型：{', '.join(invalid_processes)}")
+            else:
+                # Add new styles from Excel
+                new_styles = []
+                for _, row in df.iterrows():
+                    new_style = {
+                        "style_number": str(row['款号']),
+                        "sewing_start_date": row['缝纫开始时间'],
+                        "process_type": row['工序'],
+                        "cycle": int(row['确认周转周期'])
+                    }
+                    new_styles.append(new_style)
+                
+                if st.button("添加Excel中的款号"):
+                    st.session_state["all_styles"].extend(new_styles)
+                    st.success(f"已从Excel添加 {len(new_styles)} 个款号")
+                    st.rerun()
+    
+    except Exception as e:
+        st.error(f"读取Excel文件时出错：{str(e)}")
+
+st.subheader("方式二：手动输入")
 # 创建输入表单
 with st.form("style_input_form"):
     # 批量输入款号，每行一个
