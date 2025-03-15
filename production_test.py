@@ -46,12 +46,15 @@ except Exception as e:
     st.write(f"⚠️ Error loading font: {e}")
 
 font_names = sorted(set(f.name for f in fm.fontManager.ttflist))
-
+# ✅ Register SimHei with Matplotlib's font manager
+fm.fontManager.addfont(font_path)  # Manually add the font
 # ✅ Display in Streamlit
 st.write("Default Matplotlib Fonts:", font_names)
 chinese_fonts = [f for f in font_names if any(name in f for name in ['SimHei', 'PingFang', 'Microsoft', 'Arial Unicode'])]
 st.write("Available Chinese Fonts:", chinese_fonts)
 
+# ✅ Verify the new font is set
+st.write("Matplotlib is now using font:", mpl.rcParams["font.family"])
 # ✅ Force Matplotlib to only use SimHei.ttf
 mpl.rcParams["font.family"] = prop.get_name()
 mpl.rcParams["font.sans-serif"] = [prop.get_name()]
