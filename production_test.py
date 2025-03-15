@@ -35,7 +35,7 @@ def load_user_data(user_id):
             return data
     return {"all_styles": []}
 
-
+fm._load_fontmanager()
 plt.rcParams['font.sans-serif'] = ['PingFang HK', 'Songti SC', 'Arial Unicode MS']
 #plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['axes.unicode_minus'] = False  # Fix minus signs
@@ -52,9 +52,6 @@ plt.rcParams['text.hinting'] = 'auto'  # Better text rendering
 plt.rcParams['text.hinting_factor'] = 8  # Sharper text
 plt.rcParams['text.usetex'] = False  # Disable LaTeX by default
 plt.style.use('default')  # Reset to default style for clean rendering
-
-available_fonts = sorted(f.name for f in fm.findSystemFonts(fontpaths=["./fonts"], fontext='ttf'))
-st.write("Available fonts:", available_fonts)
 
 # 检查字体是否可用
 font_names = [f.name for f in fm.fontManager.ttflist]
