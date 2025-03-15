@@ -12,7 +12,7 @@ import zipfile
 import matplotlib as mpl
 
 plt.rcParams['font.sans-serif'] = ['PingFang HK', 'Songti SC', 'Arial Unicode MS','SimHei']
-plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['font.family'] = 'SimHei'
 plt.rcParams['axes.unicode_minus'] = False  # Fix minus signs
 plt.rcParams['figure.dpi'] = 300
 plt.rcParams['savefig.dpi'] = 300
