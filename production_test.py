@@ -57,7 +57,7 @@ mpl.rcParams["font.family"] = prop.get_name()
 st.write("Matplotlib is now using font:", mpl.rcParams["font.family"])
 # ✅ Force Matplotlib to only use SimHei.ttf
 mpl.rcParams["font.family"] = prop.get_name()
-mpl.rcParams["font.sans-serif"] = [prop.get_name()]
+#mpl.rcParams["font.sans-serif"] = [prop.get_name()]
 mpl.rcParams["axes.unicode_minus"] = False  # Fix minus sign display
 mpl.rcParams["figure.dpi"] = 300
 mpl.rcParams["savefig.dpi"] = 300
