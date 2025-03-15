@@ -48,7 +48,7 @@ html, body, * {
 </style>
 """
 st.markdown(font_css, unsafe_allow_html=True)
-plt.rcParams['font.sans-serif']=[‘SimHei’] 
+plt.rcParams['font.sans-serif']=['SimHei'] 
 #plt.rcParams['font.sans-serif'] = [ 'Arial Unicode MS','PingFang HK', 'Songti SC']
 #plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['axes.unicode_minus'] = False  # Fix minus signs
