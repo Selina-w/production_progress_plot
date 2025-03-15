@@ -658,23 +658,83 @@ def login(account_id):
     st.session_state["all_styles"] = user_data["all_styles"]
 
 
-if not st.session_state["logged_in"]:
-    st.markdown("<h1 style='text-align: center; white-space: nowrap; font-size: 2.5em;'>欢迎使用上品岛生产流程时间管理系统</h1>", unsafe_allow_html=True)
+# ✅ Custom CSS for better spacing & styling
+st.markdown(
+    """
+    <style>
+    /* Center the title and add spacing */
+    .title-container {
+        text-align: center;
+        font-size: 2.8em;
+        font-weight: bold;
+        margin-bottom: 50px;  /* ⬅ Increased spacing */
+        color: #333333;
+    }
+
+    /* Login form container */
+    .login-container {
+        max-width: 400px;
+        margin: auto;
+        padding: 30px;
+        border-radius: 15px;
+        background-color: #f9f9f9;
+        box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    /* Increase spacing for input fields */
+    .stTextInput {
+        margin-bottom: 20px !important;  /* ⬅ Added spacing */
+    }
+
+    /* Center and style the button */
+    .stButton>button {
+        width: 100%;
+        padding: 12px;
+        font-size: 18px;
+        font-weight: bold;
+        border-radius: 8px;
+        background-color: #007BFF;
+        color: white;
+        border: none;
+        margin-top: 15px; /* ⬅ Added spacing */
+    }
     
-    # Center the content
-    col1, col2, col3 = st.columns([1,2,1])
-    
+    .stButton>button:hover {
+        background-color: #0056b3;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+if not st.session_state.get("logged_in", False):
+    # ✅ Center the title with extra spacing
+    st.markdown("<div class='title-container'>欢迎使用上品岛生产流程时间管理系统</div>", unsafe_allow_html=True)
+
+    # ✅ Create a centered login form with spacing
+    col1, col2, col3 = st.columns([1, 2, 1])
+
     with col2:
+        st.markdown("<div class='login-container'>", unsafe_allow_html=True)
+
         st.write("请输入账号和密码以访问系统")
-        account_id = st.text_input("账号")
-        password = st.text_input("密码", type="password")
         
-        if st.button("登录"):
-            if account_id in VALID_CREDENTIALS and password == VALID_CREDENTIALS[account_id]:
-                login(account_id)
-                st.rerun()
-            else:
-                st.error("账号或密码错误，请重试")
+        # ✅ Add spacing with st.form()
+        with st.form(key="login_form"):
+            account_id = st.text_input("账号")
+            password = st.text_input("密码", type="password")
+            submitted = st.form_submit_button("登录")
+
+            if submitted:
+                if account_id in VALID_CREDENTIALS and password == VALID_CREDENTIALS[account_id]:
+                    st.session_state["logged_in"] = True
+                    st.session_state["current_user"] = account_id
+                    st.rerun()
+                else:
+                    st.error("账号或密码错误，请重试")
+        
+        st.markdown("</div>", unsafe_allow_html=True)
 
 else:
     # Main application code
