@@ -10,6 +10,38 @@ import tempfile
 import os
 import zipfile
 import matplotlib as mpl
+import base64
+
+# ✅ Load the font dynamically
+font_path = "./simhei.ttf"
+
+def load_font_css(font_path):
+    """Generates CSS to use a custom font in Streamlit."""
+    with open(font_path, "rb") as f:
+        font_base64 = base64.b64encode(f.read()).decode()
+
+    return f"""
+    <style>
+    @font-face {{
+        font-family: 'SimHei';
+        src: url(data:font/truetype;charset=utf-8;base64,{font_base64}) format('truetype');
+    }}
+    html, body, * {{
+        font-family: 'SimHei', sans-serif;
+    }}
+    </style>
+    """
+
+# ✅ Apply the font CSS
+if os.path.exists(font_path):
+    st.markdown(load_font_css(font_path), unsafe_allow_html=True)
+    st.write("✅ Custom font SimHei applied!")
+else:
+    st.write("⚠️ Font file not found!")
+
+# ✅ Example usage
+st.title("示例标题 - SimHei 字体")
+st.write("这是使用 SimHei.ttf 的示例文本。")
 
 plt.rcParams['font.sans-serif'] = ['PingFang HK', 'Songti SC', 'Arial Unicode MS']
 #plt.rcParams['font.family'] = 'sans-serif'
