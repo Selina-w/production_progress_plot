@@ -57,30 +57,14 @@ fig.savefig("test_plot.png", dpi=300, bbox_inches="tight")
 # ✅ Display in Streamlit
 st.image("test_plot.png")
 
-#plt.rcParams['font.sans-serif']=['SimHei'] 
-plt.rcParams['font.sans-serif'] = [ 'Arial Unicode MS','PingFang HK', 'Songti SC','SimHei']
-#plt.rcParams['font.family'] = 'sans-serif'
-plt.rcParams['axes.unicode_minus'] = False  # Fix minus signs
-plt.rcParams['figure.dpi'] = 300
-plt.rcParams['savefig.dpi'] = 300
-plt.rcParams['path.simplify'] = False  # Don't simplify paths for better quality
-plt.rcParams['agg.path.chunksize'] = 10000  # Increase path chunk size
-plt.rcParams['figure.facecolor'] = 'white'
-plt.rcParams['figure.edgecolor'] = 'white'
-plt.rcParams['lines.antialiased'] = True
-plt.rcParams['patch.antialiased'] = True
-plt.rcParams['text.antialiased'] = True
-plt.rcParams['text.hinting'] = 'auto'  # Better text rendering
-plt.rcParams['text.hinting_factor'] = 8  # Sharper text
-plt.rcParams['text.usetex'] = False  # Disable LaTeX by default
-plt.style.use('default')  # Reset to default style for clean rendering
-
-# 检查字体是否可用
-font_names = [f.name for f in fm.fontManager.ttflist]
-chinese_fonts = [f for f in font_names if any(name in f for name in ['PingFang', 'Microsoft', 'SimHei', 'Arial Unicode'])]
-if chinese_fonts:
-    plt.rcParams['font.sans-serif'] = chinese_fonts[0]
-    print(chinese_fonts[0])
+# ✅ Force Matplotlib to only use SimHei.ttf
+mpl.rcParams["font.family"] = prop.get_name()
+mpl.rcParams["font.sans-serif"] = [prop.get_name()]
+mpl.rcParams["axes.unicode_minus"] = False  # Fix minus sign display
+mpl.rcParams["figure.dpi"] = 300
+mpl.rcParams["savefig.dpi"] = 300
+mpl.rcParams["text.usetex"] = False  # Disable LaTeX rendering
+mpl.style.use("default")  # Reset style
 
 # 部门工序定义
 def get_department_steps(process_type=None):
