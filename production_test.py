@@ -56,7 +56,7 @@ chinese_fonts = [f for f in font_names if any(name in f for name in ['SimHei', '
 st.write("Available Chinese Fonts:", chinese_fonts)
 
 # ✅ Apply fonts globally
-mpl.rcParams["font.family"] = arial_unicode_prop.get_name()  # Use SimHei as primary
+mpl.rcParams["font.family"] = simhei_prop.get_name()  # Use SimHei as primary
 mpl.rcParams["font.sans-serif"] = [simhei_prop.get_name(), arial_unicode_prop.get_name()]  # Add Arial Unicode as fallback
 mpl.rcParams["axes.unicode_minus"] = False  # Fix minus signs
 
