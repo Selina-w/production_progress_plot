@@ -35,6 +35,20 @@ def load_user_data(user_id):
             return data
     return {"all_styles": []}
 
+# ✅ Inject custom font using CSS
+font_css = """
+<style>
+@font-face {
+    font-family: 'SimHei';
+    src: url('/static/SimHei.ttf') format('truetype');
+}
+html, body, * {
+    font-family: 'SimHei', sans-serif;
+}
+</style>
+"""
+st.markdown(font_css, unsafe_allow_html=True)
+
 plt.rcParams['font.sans-serif'] = [ 'Arial Unicode MS','PingFang HK', 'Songti SC']
 #plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['axes.unicode_minus'] = False  # Fix minus signs
