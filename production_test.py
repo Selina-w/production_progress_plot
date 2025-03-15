@@ -57,8 +57,12 @@ prop = fm.FontProperties(fname=font_path)
 mpl.rcParams["font.family"] = prop.get_name()
 mpl.rcParams["axes.unicode_minus"] = False  # Ensure minus signs display correctly
 
-# ✅ Debug: Print the font being used
-print("Matplotlib is using font:", prop.get_name())
+# ✅ Check if the font is detected
+st.write(f"Loaded font: {prop.get_name()}")
+
+# ✅ List all available fonts Matplotlib can find
+available_fonts = sorted(f.name for f in fm.findSystemFonts(fontpaths=["./static"], fontext='ttf'))
+st.write("Available fonts:", available_fonts)
 
 st.markdown(font_css, unsafe_allow_html=True)
 plt.rcParams['font.sans-serif']=['SimHei'] 
