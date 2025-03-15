@@ -665,7 +665,7 @@ if not st.session_state["logged_in"]:
     col1, col2, col3 = st.columns([1,2,1])
     
     with col2:
-        st.write("请输入账号和密码以访问系统")
+        #st.write("请输入账号和密码以访问系统")
         account_id = st.text_input("账号")
         password = st.text_input("密码", type="password")
         
