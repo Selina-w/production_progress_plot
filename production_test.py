@@ -12,20 +12,8 @@ import zipfile
 import matplotlib as mpl
 import base64
 
-# ✅ Load the font dynamically
-font_path = "./simhei.ttf"
-
-prop = fm.FontProperties(fname=font_path)
-
-# ✅ Apply globally
-plt.rcParams["font.family"] = prop.get_name()
-plt.rcParams["axes.unicode_minus"] = False
-# ✅ Example usage
-st.title("示例标题 - SimHei 字体")
-st.write("这是使用 SimHei.ttf 的示例文本。")
-
-#plt.rcParams['font.sans-serif'] = ['PingFang HK', 'Songti SC', 'Arial Unicode MS']
-#plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['font.sans-serif'] = ['PingFang HK', 'Songti SC', 'Arial Unicode MS']
+plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['axes.unicode_minus'] = False  # Fix minus signs
 plt.rcParams['figure.dpi'] = 300
 plt.rcParams['savefig.dpi'] = 300
