@@ -659,7 +659,7 @@ def login(account_id):
 
 # Login page
 if not st.session_state["logged_in"]:
-    st.title("欢迎使用上品岛生产流程时间管理系统")
+    st.markdown("<h1 style='text-align: center; white-space: nowrap; font-size: 2.5em;'>欢迎使用上品岛生产流程时间管理系统</h1>", unsafe_allow_html=True)
     
     # Center the content
     col1, col2, col3 = st.columns([1,2,1])
