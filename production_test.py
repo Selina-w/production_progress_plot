@@ -658,23 +658,106 @@ def login(account_id):
     st.session_state["all_styles"] = user_data["all_styles"]
 
 
-if not st.session_state["logged_in"]:
-    st.markdown("<h1 style='text-align: center; white-space: nowrap; font-size: 2.5em;'>欢迎使用上品岛生产流程时间管理系统</h1>", unsafe_allow_html=True)
-    
-    # Center the content
-    col1, col2, col3 = st.columns([1,2,1])
-    
-    with col2:
-        #st.write("请输入账号和密码以访问系统")
-        account_id = st.text_input("账号")
-        password = st.text_input("密码", type="password")
-        
-        if st.button("登录"):
-            if account_id in VALID_CREDENTIALS and password == VALID_CREDENTIALS[account_id]:
-                login(account_id)
-                st.rerun()
-            else:
-                st.error("账号或密码错误，请重试") 
+if not st.session_state.get("logged_in", False):
+    # ✅ 使用 st.empty() 确保所有内容填充整个页面
+    login_container = st.empty()
+
+    with login_container.container():
+        # ✅ 创建两列布局
+        col1, col2 = st.columns([1, 1])  # 左侧登录，右侧欢迎信息
+
+        # 🎨 **左侧：登录框**
+        with col1:
+            st.markdown(
+                """
+                <div style="min-width: 500px; max-width: 700px; 
+                            padding: 40px;  /* ✅ 让整个左边框更美观 */
+                            background-color: white; 
+                            border-radius: 10px;">
+                    <h2 style='text-align: left; 
+                            margin-top: 40px;  
+                            margin-bottom: 10px;  
+                            font-size: 2.5em;'>
+                        登录到您的账户
+                    </h2>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            # 如果有LOGO，可以放在这里
+            # st.image("logo.png", width=120)
+
+            account_id = st.text_input("账号", key="account_input")
+            password = st.text_input("密码", type="password", key="password_input")
+
+            # ✅ 居中的登录按钮
+            col_a, col_b, col_c = st.columns([1, 2, 1])
+            with col_b:
+                button_style = """
+                <style>
+                    div[data-testid="stButton"] button {
+                        background: linear-gradient(135deg, #6a11cb, #2575fc);
+                        color: white;
+                        border: none;
+                        padding: 0.5rem 1rem;
+                        border-radius: 5px;
+                        font-weight: bold;
+                        transition: all 0.3s ease;
+                    }
+                    div[data-testid="stButton"] button:hover {
+                        background: linear-gradient(135deg, #5a0cb1, #1e63d6);
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 12px rgba(106, 17, 203, 0.3);
+                    }
+                </style>
+                """
+                st.markdown(button_style, unsafe_allow_html=True)
+                if st.button("登录", use_container_width=True):
+                    if account_id in VALID_CREDENTIALS and password == VALID_CREDENTIALS[account_id]:
+                        st.session_state["logged_in"] = True
+                        st.session_state["current_user"] = account_id
+                        st.rerun()
+                    else:
+                        st.error("账号或密码错误，请重试")
+
+        # 🎨 **右侧：欢迎信息**
+        with col2:
+            st.markdown(
+                """
+                <div style='
+                    background: linear-gradient(135deg, #6a11cb, #2575fc);
+                    padding: 70px;
+                    min-height: 500px;
+                    min-width: 450px;
+                    color: white;
+                    border-radius: 120px 40px 40px 120px;  /* ✅ 让它更符合UI */
+                    text-align: center;
+                    margin-left: 100px;
+                '>
+                    <h1 style="margin-bottom: 10px; color: white;">欢迎回来！</h1>
+                    <p style="font-size: 18px; color: white;">请登录以访问生产流程管理系统。</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+    # ✅ 强制设置高度，防止需要滚动
+    st.markdown(
+        """
+        <style>
+        .block-container {
+            padding-top: 3vh !important;  /* 页面上方留空间 */
+            height: 90vh !important;  /* 让整个界面占满 */
+            max-width: 1600px !important; /* 控制最大宽度 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+ 
 
 else:
     # Main application code
