@@ -20,7 +20,7 @@ print(f"Font loaded: {prop.get_name()}")
 
 # ✅ List all available fonts that Matplotlib can see
 available_fonts = sorted(f.name for f in fm.findSystemFonts(fontpaths=["./fonts"], fontext='ttf'))
-print("Available fonts:", available_fonts)
+st.write("Available fonts:", available_fonts)
 
 
 #plt.rcParams['font.sans-serif'] = ['PingFang HK', 'Songti SC', 'Arial Unicode MS']
