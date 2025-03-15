@@ -17,7 +17,7 @@ prop = fm.FontProperties(fname=font_path)
 # ✅ Force Matplotlib to use SimHei for all text
 mpl.rcParams["font.family"] = prop.get_name()
 mpl.rcParams["axes.unicode_minus"] = False  # Ensure negative signs are displayed properly
-
+mpl.rcParams["font.family"] = "sans-serif"
 
 #plt.rcParams['font.sans-serif'] = ['PingFang HK', 'Songti SC', 'Arial Unicode MS']
 #plt.rcParams['font.family'] = 'sans-serif'
