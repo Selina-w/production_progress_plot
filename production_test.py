@@ -10,6 +10,30 @@ import tempfile
 import os
 import zipfile
 import matplotlib as mpl
+import json
+import pathlib
+
+# Create data directory if it doesn't exist
+DATA_DIR = pathlib.Path("user_data")
+DATA_DIR.mkdir(exist_ok=True)
+
+def save_user_data(user_id, data):
+    """Save user data to a JSON file"""
+    user_file = DATA_DIR / f"{user_id}.json"
+    with open(user_file, 'w', encoding='utf-8') as f:
+        json.dump(data, f, default=str)
+
+def load_user_data(user_id):
+    """Load user data from JSON file"""
+    user_file = DATA_DIR / f"{user_id}.json"
+    if user_file.exists():
+        with open(user_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            # Convert string dates back to date objects
+            for style in data.get("all_styles", []):
+                style["sewing_start_date"] = datetime.strptime(style["sewing_start_date"], "%Y-%m-%d").date()
+            return data
+    return {"all_styles": []}
 
 plt.rcParams['font.sans-serif'] = ['PingFang HK', 'Songti SC', 'Arial Unicode MS']
 #plt.rcParams['font.family'] = 'sans-serif'
@@ -612,183 +636,253 @@ def adjust_schedule(schedule, department, delayed_step, new_end_time):
     
     return schedule 
 
-# Streamlit 界面
-st.title("生产流程时间管理系统")
+# Define valid credentials (you can modify this dictionary as needed)
+VALID_CREDENTIALS = {
+    "admin": "JD2024",
+    "user1": "password1",
+    "user2": "password2"
+}
 
-# 初始化 session state
-if "all_styles" not in st.session_state:
-    st.session_state["all_styles"] = []
+# Initialize session state for login
+if "logged_in" not in st.session_state:
+    st.session_state["logged_in"] = False
+if "current_user" not in st.session_state:
+    st.session_state["current_user"] = None
 
-# 添加Excel上传功能
-st.subheader("方式一：上传Excel文件")
-uploaded_file = st.file_uploader("上传Excel文件 (必需列：款号、缝纫开始时间、工序、确认周转周期)", type=['xlsx', 'xls'])
+def login(account_id):
+    st.session_state["logged_in"] = True
+    st.session_state["current_user"] = account_id
+    # Load user's saved data
+    user_data = load_user_data(account_id)
+    st.session_state["all_styles"] = user_data["all_styles"]
 
-if uploaded_file is not None:
-    try:
-        df = pd.read_excel(uploaded_file)
-        required_columns = ['款号', '缝纫开始时间', '工序', '确认周转周期']
+# Login page
+if not st.session_state["logged_in"]:
+    st.title("生产流程时间管理系统 - 登录")
+    
+    # Center the content
+    col1, col2, col3 = st.columns([1,2,1])
+    
+    with col2:
+        st.write("请输入账号和密码以访问系统")
+        account_id = st.text_input("账号")
+        password = st.text_input("密码", type="password")
         
-        # Check if all required columns exist
-        if not all(col in df.columns for col in required_columns):
-            st.error(f"Excel文件必须包含以下列：{', '.join(required_columns)}")
-        else:
-            # Convert dates to datetime if they aren't already
-            df['缝纫开始时间'] = pd.to_datetime(df['缝纫开始时间']).dt.date
-            
-            # Validate process types
-            valid_processes = ["满花+局花+绣花", "满花+局花", "满花+绣花", "局花+绣花"]
-            invalid_processes = df[~df['工序'].isin(valid_processes)]['工序'].unique()
-            if len(invalid_processes) > 0:
-                st.error(f"发现无效的工序类型：{', '.join(invalid_processes)}")
-            else:
-                # Add new styles from Excel
-                new_styles = []
-                for _, row in df.iterrows():
-                    new_style = {
-                        "style_number": str(row['款号']),
-                        "sewing_start_date": row['缝纫开始时间'],
-                        "process_type": row['工序'],
-                        "cycle": int(row['确认周转周期'])
-                    }
-                    new_styles.append(new_style)
-                
-                if st.button("添加Excel中的款号"):
-                    st.session_state["all_styles"].extend(new_styles)
-                    st.success(f"已从Excel添加 {len(new_styles)} 个款号")
-                    st.rerun()
-    
-    except Exception as e:
-        st.error(f"读取Excel文件时出错：{str(e)}")
-
-st.subheader("方式二：手动输入")
-# 创建输入表单
-with st.form("style_input_form"):
-    # 批量输入款号，每行一个
-    style_numbers = st.text_area("请输入款号(每行一个):", "")
-    sewing_start_date = st.date_input("请选择缝纫开始时间:", min_value=datetime.today().date())
-    process_options = ["满花+局花+绣花", "满花+局花", "满花+绣花", "局花+绣花"]
-    selected_process = st.selectbox("请选择工序:", process_options)
-    cycle = st.selectbox("请选择确认周转周期:", [7, 14, 20])
-    
-    submitted = st.form_submit_button("添加款号")
-    if submitted and style_numbers:
-        # 分割多行输入，去除空行和空格
-        new_style_numbers = [s.strip() for s in style_numbers.split('\n') if s.strip()]
-        
-        # 添加新的款号信息
-        for style_number in new_style_numbers:
-            new_style = {
-                "style_number": style_number,
-                "sewing_start_date": sewing_start_date,
-                "process_type": selected_process,
-                "cycle": cycle
-            }
-            st.session_state["all_styles"].append(new_style)
-        st.success(f"已添加 {len(new_style_numbers)} 个款号")
-
-# 显示当前添加的所有款号
-if st.session_state["all_styles"]:
-    st.subheader("已添加的款号:")
-    
-    # 使用列表来显示所有款号，并提供删除按钮
-    for idx, style in enumerate(st.session_state["all_styles"]):
-        col1, col2 = st.columns([4, 1])
-        with col1:
-            st.write(f"{idx + 1}. 款号: {style['style_number']}, 工序: {style['process_type']}, 缝纫开始时间: {style['sewing_start_date']}, 周期: {style['cycle']}")
-        with col2:
-            if st.button("删除", key=f"delete_{idx}"):
-                st.session_state["all_styles"].pop(idx)
+        if st.button("登录"):
+            if account_id in VALID_CREDENTIALS and password == VALID_CREDENTIALS[account_id]:
+                login(account_id)
                 st.rerun()
-    
-    # 添加清空所有按钮
-    if st.button("清空所有款号"):
-        st.session_state["all_styles"] = []
-        st.rerun()
+            else:
+                st.error("账号或密码错误，请重试")
 
-# 生成图表按钮
-if st.session_state["all_styles"]:
-    col1, col2 = st.columns(2)
+else:
+    # Main application code
+    st.title("生产流程时间管理系统")
     
-    with col1:
-        if st.button("生成所有生产流程图"):
-            # 创建一个临时目录来存储图片
-            with tempfile.TemporaryDirectory() as temp_dir:
-                # 生成所有图表
-                for style in st.session_state["all_styles"]:
-                    sewing_start_time = datetime.combine(style["sewing_start_date"], datetime.min.time())
-                    schedule = calculate_schedule(sewing_start_time, style["process_type"], style["cycle"])
-                    
-                    # 设置当前款号用于标题显示
-                    st.session_state["style_number"] = style["style_number"]
-                    fig = plot_timeline(schedule, style["process_type"], style["cycle"])
-                    
-                    # 保存图片 - 简化文件名
-                    filename = f"{style['style_number']}_{style['process_type']}.png"
-                    filepath = os.path.join(temp_dir, filename)
-                    fig.savefig(filepath, dpi=300, bbox_inches='tight')
-                    plt.close(fig)
+    # Add user info and logout button in the top right
+    col1, col2, col3 = st.columns([8, 2, 1])
+    with col2:
+        st.write(f"当前用户: {st.session_state['current_user']}")
+    with col3:
+        if st.button("登出"):
+            # Save user data before logging out
+            save_user_data(st.session_state["current_user"], {
+                "all_styles": st.session_state["all_styles"]
+            })
+            st.session_state["logged_in"] = False
+            st.session_state["current_user"] = None
+            st.rerun()
+    
+    # Initialize session state
+    if "all_styles" not in st.session_state:
+        st.session_state["all_styles"] = []
+
+    # 添加Excel上传功能
+    st.subheader("方式一：上传Excel文件")
+    uploaded_file = st.file_uploader("上传Excel文件 (必需列：款号、缝纫开始时间、工序、确认周转周期)", type=['xlsx', 'xls'])
+
+    if uploaded_file is not None:
+        try:
+            df = pd.read_excel(uploaded_file)
+            required_columns = ['款号', '缝纫开始时间', '工序', '确认周转周期']
+            
+            # Check if all required columns exist
+            if not all(col in df.columns for col in required_columns):
+                st.error(f"Excel文件必须包含以下列：{', '.join(required_columns)}")
+            else:
+                # Convert dates to datetime if they aren't already
+                df['缝纫开始时间'] = pd.to_datetime(df['缝纫开始时间']).dt.date
                 
-                # 创建ZIP文件
-                zip_path = os.path.join(temp_dir, "生产流程时间表.zip")
-                with zipfile.ZipFile(zip_path, 'w') as zipf:
-                    for file in os.listdir(temp_dir):
-                        if file.endswith('.png'):
-                            zipf.write(os.path.join(temp_dir, file), file)
+                # Validate process types
+                valid_processes = ["满花+局花+绣花", "满花+局花", "满花+绣花", "局花+绣花"]
+                invalid_processes = df[~df['工序'].isin(valid_processes)]['工序'].unique()
+                if len(invalid_processes) > 0:
+                    st.error(f"发现无效的工序类型：{', '.join(invalid_processes)}")
+                else:
+                    # Add new styles from Excel
+                    new_styles = []
+                    for _, row in df.iterrows():
+                        new_style = {
+                            "style_number": str(row['款号']),
+                            "sewing_start_date": row['缝纫开始时间'],
+                            "process_type": row['工序'],
+                            "cycle": int(row['确认周转周期'])
+                        }
+                        new_styles.append(new_style)
+                    
+                    if st.button("添加Excel中的款号"):
+                        st.session_state["all_styles"].extend(new_styles)
+                        # Auto-save after adding styles
+                        save_user_data(st.session_state["current_user"], {
+                            "all_styles": st.session_state["all_styles"]
+                        })
+                        st.success(f"已从Excel添加 {len(new_styles)} 个款号")
+                        st.rerun()
+        
+        except Exception as e:
+            st.error(f"读取Excel文件时出错：{str(e)}")
+
+    st.subheader("方式二：手动输入")
+    # 创建输入表单
+    with st.form("style_input_form"):
+        # 批量输入款号，每行一个
+        style_numbers = st.text_area("请输入款号(每行一个):", "")
+        sewing_start_date = st.date_input("请选择缝纫开始时间:", min_value=datetime.today().date())
+        process_options = ["满花+局花+绣花", "满花+局花", "满花+绣花", "局花+绣花"]
+        selected_process = st.selectbox("请选择工序:", process_options)
+        cycle = st.selectbox("请选择确认周转周期:", [7, 14, 20])
+        
+        submitted = st.form_submit_button("添加款号")
+        if submitted and style_numbers:
+            # 分割多行输入，去除空行和空格
+            new_style_numbers = [s.strip() for s in style_numbers.split('\n') if s.strip()]
+            
+            # 添加新的款号信息
+            for style_number in new_style_numbers:
+                new_style = {
+                    "style_number": style_number,
+                    "sewing_start_date": sewing_start_date,
+                    "process_type": selected_process,
+                    "cycle": cycle
+                }
+                st.session_state["all_styles"].append(new_style)
+            # Auto-save after adding styles
+            save_user_data(st.session_state["current_user"], {
+                "all_styles": st.session_state["all_styles"]
+            })
+            st.success(f"已添加 {len(new_style_numbers)} 个款号")
+
+    # 显示当前添加的所有款号
+    if st.session_state["all_styles"]:
+        st.subheader("已添加的款号:")
+        
+        # 使用列表来显示所有款号，并提供删除按钮
+        for idx, style in enumerate(st.session_state["all_styles"]):
+            col1, col2 = st.columns([4, 1])
+            with col1:
+                st.write(f"{idx + 1}. 款号: {style['style_number']}, 工序: {style['process_type']}, 缝纫开始时间: {style['sewing_start_date']}, 周期: {style['cycle']}")
+            with col2:
+                if st.button("删除", key=f"delete_{idx}"):
+                    st.session_state["all_styles"].pop(idx)
+                    # Auto-save after deleting style
+                    save_user_data(st.session_state["current_user"], {
+                        "all_styles": st.session_state["all_styles"]
+                    })
+                    st.rerun()
+        
+        # 添加清空所有按钮
+        if st.button("清空所有款号"):
+            st.session_state["all_styles"] = []
+            # Auto-save after clearing styles
+            save_user_data(st.session_state["current_user"], {
+                "all_styles": st.session_state["all_styles"]
+            })
+            st.rerun()
+
+    # 生成图表按钮
+    if st.session_state["all_styles"]:
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button("生成所有生产流程图"):
+                # 创建一个临时目录来存储图片
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    # 生成所有图表
+                    for style in st.session_state["all_styles"]:
+                        sewing_start_time = datetime.combine(style["sewing_start_date"], datetime.min.time())
+                        schedule = calculate_schedule(sewing_start_time, style["process_type"], style["cycle"])
+                        
+                        # 设置当前款号用于标题显示
+                        st.session_state["style_number"] = style["style_number"]
+                        fig = plot_timeline(schedule, style["process_type"], style["cycle"])
+                        
+                        # 保存图片 - 简化文件名
+                        filename = f"{style['style_number']}_{style['process_type']}.png"
+                        filepath = os.path.join(temp_dir, filename)
+                        fig.savefig(filepath, dpi=300, bbox_inches='tight')
+                        plt.close(fig)
+                    
+                    # 创建ZIP文件
+                    zip_path = os.path.join(temp_dir, "生产流程时间表.zip")
+                    with zipfile.ZipFile(zip_path, 'w') as zipf:
+                        for file in os.listdir(temp_dir):
+                            if file.endswith('.png'):
+                                zipf.write(os.path.join(temp_dir, file), file)
+                    
+                    # 提供ZIP文件下载
+                    with open(zip_path, "rb") as f:
+                        st.download_button(
+                            label="下载所有图片(ZIP)",
+                            data=f,
+                            file_name="生产流程时间表.zip",
+                            mime="application/zip"
+                        )
+        
+        with col2:
+            if st.button("生成部门时间线图"):
+                # 生成部门时间线图
+                zip_path = generate_department_wise_plots(st.session_state["all_styles"])
                 
                 # 提供ZIP文件下载
                 with open(zip_path, "rb") as f:
                     st.download_button(
-                        label="下载所有图片(ZIP)",
+                        label="下载部门时间线图(ZIP)",
                         data=f,
-                        file_name="生产流程时间表.zip",
+                        file_name="部门时间线图.zip",
                         mime="application/zip"
                     )
-    
-    with col2:
-        if st.button("生成部门时间线图"):
-            # 生成部门时间线图
-            zip_path = generate_department_wise_plots(st.session_state["all_styles"])
-            
-            # 提供ZIP文件下载
-            with open(zip_path, "rb") as f:
-                st.download_button(
-                    label="下载部门时间线图(ZIP)",
-                    data=f,
-                    file_name="部门时间线图.zip",
-                    mime="application/zip"
-                )
 
-# 调整生产流程部分保持不变
-if "schedule" in st.session_state:
-    st.subheader("调整生产流程")
-    
-    # 选择部门和步骤
-    selected_dept = st.selectbox("选择部门:", list(st.session_state["schedule"].keys()))
-    if selected_dept:
-        delayed_step = st.selectbox("选择延误的工序:", list(st.session_state["schedule"][selected_dept].keys()))
-        new_end_date = st.date_input("选择新的完成时间:", min_value=datetime.today().date())
-        # 转换date为datetime
-        new_end_time = datetime.combine(new_end_date, datetime.min.time())
+    # 调整生产流程部分保持不变
+    if "schedule" in st.session_state:
+        st.subheader("调整生产流程")
         
-        if st.button("调整生产时间"):
-            st.session_state["schedule"] = adjust_schedule(
-                st.session_state["schedule"],
-                selected_dept,
-                delayed_step,
-                new_end_time
-            )
-            fig = plot_timeline(st.session_state["schedule"], selected_process, cycle)
+        # 选择部门和步骤
+        selected_dept = st.selectbox("选择部门:", list(st.session_state["schedule"].keys()))
+        if selected_dept:
+            delayed_step = st.selectbox("选择延误的工序:", list(st.session_state["schedule"][selected_dept].keys()))
+            new_end_date = st.date_input("选择新的完成时间:", min_value=datetime.today().date())
+            # 转换date为datetime
+            new_end_time = datetime.combine(new_end_date, datetime.min.time())
             
-            # Display the plot in Streamlit
-            st.pyplot(fig)
-            
-            # Add download button for high-resolution image
-            buf = io.BytesIO()
-            fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
-            buf.seek(0)
-            st.download_button(
-                label="下载高分辨率图片",
-                data=buf,
-                file_name=f"{style_number}_{selected_process}.png",
-                mime="image/png"
-            )
+            if st.button("调整生产时间"):
+                st.session_state["schedule"] = adjust_schedule(
+                    st.session_state["schedule"],
+                    selected_dept,
+                    delayed_step,
+                    new_end_time
+                )
+                fig = plot_timeline(st.session_state["schedule"], selected_process, cycle)
+                
+                # Display the plot in Streamlit
+                st.pyplot(fig)
+                
+                # Add download button for high-resolution image
+                buf = io.BytesIO()
+                fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
+                buf.seek(0)
+                st.download_button(
+                    label="下载高分辨率图片",
+                    data=buf,
+                    file_name=f"{style_number}_{selected_process}.png",
+                    mime="image/png"
+                )
