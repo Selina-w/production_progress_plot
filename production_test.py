@@ -12,12 +12,16 @@ import zipfile
 import matplotlib as mpl
 
 font_path = "./simhei.ttf"  # Ensure this is correct
+
 prop = fm.FontProperties(fname=font_path)
 
-# ✅ Force Matplotlib to use SimHei for all text
-mpl.rcParams["font.family"] = prop.get_name()
-mpl.rcParams["axes.unicode_minus"] = False  # Ensure negative signs are displayed properly
-mpl.rcParams["font.family"] = "sans-serif"
+# ✅ Check if Matplotlib can recognize the font
+print(f"Font loaded: {prop.get_name()}")
+
+# ✅ List all available fonts that Matplotlib can see
+available_fonts = sorted(f.name for f in fm.findSystemFonts(fontpaths=["./fonts"], fontext='ttf'))
+print("Available fonts:", available_fonts)
+
 
 #plt.rcParams['font.sans-serif'] = ['PingFang HK', 'Songti SC', 'Arial Unicode MS']
 #plt.rcParams['font.family'] = 'sans-serif'
