@@ -47,6 +47,19 @@ html, body, * {
 }
 </style>
 """
+# ✅ Define the font path (Make sure this path is correct)
+font_path = "./static/SimHei.ttf"
+
+# ✅ Load font manually
+prop = fm.FontProperties(fname=font_path)
+
+# ✅ Set as the global Matplotlib font
+mpl.rcParams["font.family"] = prop.get_name()
+mpl.rcParams["axes.unicode_minus"] = False  # Ensure minus signs display correctly
+
+# ✅ Debug: Print the font being used
+print("Matplotlib is using font:", prop.get_name())
+
 st.markdown(font_css, unsafe_allow_html=True)
 plt.rcParams['font.sans-serif']=['SimHei'] 
 #plt.rcParams['font.sans-serif'] = [ 'Arial Unicode MS','PingFang HK', 'Songti SC']
