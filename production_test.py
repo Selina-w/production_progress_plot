@@ -35,7 +35,7 @@ def load_user_data(user_id):
             return data
     return {"all_styles": []}
 
-plt.rcParams['font.sans-serif'] = ['PingFang HK', 'Songti SC', 'Arial Unicode MS']
+plt.rcParams['font.sans-serif'] = [ 'Arial Unicode MS']
 #plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['axes.unicode_minus'] = False  # Fix minus signs
 plt.rcParams['figure.dpi'] = 300
@@ -56,7 +56,7 @@ plt.style.use('default')  # Reset to default style for clean rendering
 font_names = [f.name for f in fm.fontManager.ttflist]
 chinese_fonts = [f for f in font_names if any(name in f for name in ['PingFang', 'Microsoft', 'SimHei', 'Arial Unicode'])]
 if chinese_fonts:
-    plt.rcParams['font.sans-serif'] = chinese_fonts[0]
+    plt.rcParams['font.sans-serif'] = 'Arial Unicode MS'#chinese_fonts[0]
     print(chinese_fonts[0])
 
 # 部门工序定义
