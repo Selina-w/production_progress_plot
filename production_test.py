@@ -36,54 +36,32 @@ def load_user_data(user_id):
     return {"all_styles": []}
 
 
-# ✅ Define the font path (Make sure this path is correct)
-simhei_path = "./static/simhei.ttf"
-arial_unicode_path = "./static/arial unicode ms.otf"
+plt.rcParams['font.sans-serif'] = ['PingFang HK', 'Songti SC', 'Arial Unicode MS']
+#plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['axes.unicode_minus'] = False  # Fix minus signs
+plt.rcParams['figure.dpi'] = 300
+plt.rcParams['savefig.dpi'] = 300
+plt.rcParams['path.simplify'] = False  # Don't simplify paths for better quality
+plt.rcParams['agg.path.chunksize'] = 10000  # Increase path chunk size
+plt.rcParams['figure.facecolor'] = 'white'
+plt.rcParams['figure.edgecolor'] = 'white'
+plt.rcParams['lines.antialiased'] = True
+plt.rcParams['patch.antialiased'] = True
+plt.rcParams['text.antialiased'] = True
+plt.rcParams['text.hinting'] = 'auto'  # Better text rendering
+plt.rcParams['text.hinting_factor'] = 8  # Sharper text
+plt.rcParams['text.usetex'] = False  # Disable LaTeX by default
+plt.style.use('default')  # Reset to default style for clean rendering
 
-# ✅ Load fonts
-simhei_prop = fm.FontProperties(fname=simhei_path)
-arial_unicode_prop = fm.FontProperties(fname=arial_unicode_path)
+available_fonts = sorted(f.name for f in fm.findSystemFonts(fontpaths=["./fonts"], fontext='ttf'))
+st.write("Available fonts:", available_fonts)
 
-# ✅ Register fonts with Matplotlib
-#fm.fontManager.addfont(simhei_path)
-#fm.fontManager.addfont(arial_unicode_path)
-# ✅ Get all fonts Matplotlib recognizes
-# Get Matplotlib's cache directory
-
-cache_dir = mpl.get_cachedir()
-
-# Remove the cache
-if os.path.exists(cache_dir):
-    import shutil
-    shutil.rmtree(cache_dir)  # ✅ Deletes the cache
-
-
-fm._load_fontmanager()  # Reload Matplotlib font cache
-
-# Check again
-st.write("After forcing reload, available fonts:", [f.name for f in fm.fontManager.ttflist])
-font_names = sorted(set(f.name for f in fm.fontManager.ttflist))
-
-# ✅ Display in Streamlit
-st.write("Default Matplotlib Fonts:", font_names)
-chinese_fonts = [f for f in font_names if any(name in f for name in ['SimHei', 'PingFang', 'Microsoft', 'Arial Unicode'])]
-st.write("Available Chinese Fonts:", chinese_fonts)
-
-# ✅ Apply fonts globally
-mpl.rcParams["font.family"] = simhei_prop.get_name()  # Use SimHei as primary
-mpl.rcParams["font.sans-serif"] = [simhei_prop.get_name(), arial_unicode_prop.get_name()]  # Add Arial Unicode as fallback
-mpl.rcParams["axes.unicode_minus"] = False  # Fix minus signs
-
-# ✅ Verify the new font is set
-st.write("Matplotlib is now using font:", mpl.rcParams["font.family"])
-# ✅ Force Matplotlib to only use SimHei.ttf
-#mpl.rcParams["font.family"] = prop.get_name()
-#mpl.rcParams["font.sans-serif"] = [prop.get_name()]
-mpl.rcParams["axes.unicode_minus"] = False  # Fix minus sign display
-mpl.rcParams["figure.dpi"] = 300
-mpl.rcParams["savefig.dpi"] = 300
-mpl.rcParams["text.usetex"] = False  # Disable LaTeX rendering
-mpl.style.use("default")  # Reset style
+# 检查字体是否可用
+font_names = [f.name for f in fm.fontManager.ttflist]
+chinese_fonts = [f for f in font_names if any(name in f for name in ['PingFang', 'Microsoft', 'SimHei', 'Arial Unicode'])]
+if chinese_fonts:
+    plt.rcParams['font.sans-serif'] = chinese_fonts[0]
+    print(chinese_fonts[0])
 
 # 部门工序定义
 def get_department_steps(process_type=None):
@@ -378,7 +356,6 @@ def plot_timeline(schedule, process_type, confirmation_period):
                 text = ax.text(text_x, y + y_offset, step_text, 
                                ha='center', 
                                va='bottom' if y_offset > 0 else 'top',
-                               fontproperties=arial_unicode_prop,
                                fontsize=16, 
                                color='black', 
                                fontweight='bold',
@@ -428,7 +405,7 @@ def plot_timeline(schedule, process_type, confirmation_period):
         # 为缝纫步骤添加文本框
         text_box = dict(boxstyle='round,pad=0.4', facecolor='white', alpha=0.8, edgecolor='black', linewidth=1)
         step_text = f"{step}\n{date.strftime('%Y/%m/%d')}"
-        ax.text(x_pos, y_center - 0.3, step_text, ha='center', va='top', fontproperties=arial_unicode_prop,
+        ax.text(x_pos, y_center - 0.3, step_text, ha='center', va='top',
                fontsize=16, color='black', fontweight='bold',
                bbox=text_box)
     
@@ -600,7 +577,6 @@ def generate_department_wise_plots(styles):
                         step_text,
                         ha='center',
                         va='bottom' if y_offset > 0 else 'top',  # Adjust vertical alignment based on position
-                        fontproperties=arial_unicode_prop,
                         fontsize=12,
                         fontweight='bold',
                         bbox=text_box,
