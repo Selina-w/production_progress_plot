@@ -19,7 +19,7 @@ prop = fm.FontProperties(fname=font_path)
 print(f"Font loaded: {prop.get_name()}")
 
 # ✅ List all available fonts that Matplotlib can see
-available_fonts = sorted(f.name for f in fm.findSystemFonts(fontpaths=["./fonts"], fontext='ttf'))
+available_fonts = sorted(f.name for f in fm.findSystemFonts(fontpaths=["./"], fontext='ttf'))
 st.write("Available fonts:", available_fonts)
 
 
