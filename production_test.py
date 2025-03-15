@@ -45,8 +45,13 @@ simhei_prop = fm.FontProperties(fname=simhei_path)
 arial_unicode_prop = fm.FontProperties(fname=arial_unicode_path)
 
 # ✅ Register fonts with Matplotlib
-fm.fontManager.addfont(simhei_path)
-fm.fontManager.addfont(arial_unicode_path)
+#fm.fontManager.addfont(simhei_path)
+#fm.fontManager.addfont(arial_unicode_path)
+# ✅ Get all fonts Matplotlib recognizes
+font_names = sorted(set(f.name for f in fm.fontManager.ttflist))
+
+# ✅ Display in Streamlit
+st.write("Default Matplotlib Fonts:", font_names)
 
 # ✅ Apply fonts globally
 mpl.rcParams["font.family"] = arial_unicode_prop.get_name()  # Use SimHei as primary
