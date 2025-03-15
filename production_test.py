@@ -46,7 +46,7 @@ except Exception as e:
     st.write(f"⚠️ Error loading font: {e}")
     
 #plt.rcParams['font.sans-serif']=['SimHei'] 
-plt.rcParams['font.sans-serif'] = [ 'Arial Unicode MS','PingFang HK', 'Songti SC']
+plt.rcParams['font.sans-serif'] = [ 'Arial Unicode MS','PingFang HK', 'Songti SC','SimHei']
 #plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['axes.unicode_minus'] = False  # Fix minus signs
 plt.rcParams['figure.dpi'] = 300
