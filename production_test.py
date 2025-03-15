@@ -48,9 +48,16 @@ arial_unicode_prop = fm.FontProperties(fname=arial_unicode_path)
 #fm.fontManager.addfont(simhei_path)
 #fm.fontManager.addfont(arial_unicode_path)
 # ✅ Get all fonts Matplotlib recognizes
-mpl.get_cachedir()
-rm -rf ~/.cache/mpl
-mpl.rcParams.update(matplotlib.rcParamsDefault)
+# Get Matplotlib's cache directory
+
+cache_dir = mpl.get_cachedir()
+
+# Remove the cache
+if os.path.exists(cache_dir):
+    import shutil
+    shutil.rmtree(cache_dir)  # ✅ Deletes the cache
+
+
 fm._load_fontmanager()  # Reload Matplotlib font cache
 
 # Check again
