@@ -357,6 +357,7 @@ def plot_timeline(schedule, process_type, confirmation_period):
                 text = ax.text(text_x, y + y_offset, step_text, 
                                ha='center', 
                                va='bottom' if y_offset > 0 else 'top',
+                               fontproperties=arial_unicode_prop,
                                fontsize=16, 
                                color='black', 
                                fontweight='bold',
@@ -406,7 +407,7 @@ def plot_timeline(schedule, process_type, confirmation_period):
         # 为缝纫步骤添加文本框
         text_box = dict(boxstyle='round,pad=0.4', facecolor='white', alpha=0.8, edgecolor='black', linewidth=1)
         step_text = f"{step}\n{date.strftime('%Y/%m/%d')}"
-        ax.text(x_pos, y_center - 0.3, step_text, ha='center', va='top',
+        ax.text(x_pos, y_center - 0.3, step_text, ha='center', va='top', fontproperties=arial_unicode_prop,
                fontsize=16, color='black', fontweight='bold',
                bbox=text_box)
     
@@ -578,6 +579,7 @@ def generate_department_wise_plots(styles):
                         step_text,
                         ha='center',
                         va='bottom' if y_offset > 0 else 'top',  # Adjust vertical alignment based on position
+                        fontproperties=arial_unicode_prop,
                         fontsize=12,
                         fontweight='bold',
                         bbox=text_box,
