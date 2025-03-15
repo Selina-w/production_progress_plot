@@ -659,7 +659,7 @@ def login(account_id):
 
 # Login page
 if not st.session_state["logged_in"]:
-    st.title("生产流程时间管理系统 - 登录")
+    st.title("欢迎使用上品岛生产流程时间管理系统")
     
     # Center the content
     col1, col2, col3 = st.columns([1,2,1])
