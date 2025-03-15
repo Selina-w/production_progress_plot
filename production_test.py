@@ -519,7 +519,7 @@ def generate_department_wise_plots(styles):
                 prev_date = dates[date_idx-1] if date_idx > 0 else None
                 next_date = dates[date_idx+1] if date_idx < len(dates)-1 else None
                 
-                scaling_factor = 0.015 + (0.05 * (1 - min(1, total_days / 20)))  # ✅ Adjust dynamically
+                scaling_factor = 0.015 + (0.04 * (1 - min(1, total_days / 20)))  # ✅ Adjust dynamically
                 # Adjust text position if dates are 1 day apart
                 if prev_date and abs((date - prev_date).days) == 1:
                     text_x = x_pos + scaling_factor#0.015  # Move right
