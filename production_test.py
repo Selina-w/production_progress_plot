@@ -11,17 +11,9 @@ import os
 import zipfile
 import matplotlib as mpl
 
-font_path = "./simhei.ttf"  # Ensure this is correct
-
-if os.path.exists(font_path):
-    st.write("✅ Font file exists!")
-else:
-    st.write("⚠️ Font file NOT found! Check the path.")
-
-
-#plt.rcParams['font.sans-serif'] = ['PingFang HK', 'Songti SC', 'Arial Unicode MS']
-#plt.rcParams['font.family'] = 'sans-serif'
-#plt.rcParams['axes.unicode_minus'] = False  # Fix minus signs
+plt.rcParams['font.sans-serif'] = ['PingFang HK', 'Songti SC', 'Arial Unicode MS','SimHei']
+plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['axes.unicode_minus'] = False  # Fix minus signs
 plt.rcParams['figure.dpi'] = 300
 plt.rcParams['savefig.dpi'] = 300
 plt.rcParams['path.simplify'] = False  # Don't simplify paths for better quality
