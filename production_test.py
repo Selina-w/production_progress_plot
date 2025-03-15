@@ -10,11 +10,18 @@ import tempfile
 import os
 import zipfile
 import matplotlib as mpl
-import base64
 
-plt.rcParams['font.sans-serif'] = ['PingFang HK', 'Songti SC', 'Arial Unicode MS']
-plt.rcParams['font.family'] = 'sans-serif'
-plt.rcParams['axes.unicode_minus'] = False  # Fix minus signs
+font_path = "./simhei.ttf"  # Ensure this is correct
+prop = fm.FontProperties(fname=font_path)
+
+# ✅ Force Matplotlib to use SimHei for all text
+mpl.rcParams["font.family"] = prop.get_name()
+mpl.rcParams["axes.unicode_minus"] = False  # Ensure negative signs are displayed properly
+
+
+#plt.rcParams['font.sans-serif'] = ['PingFang HK', 'Songti SC', 'Arial Unicode MS']
+#plt.rcParams['font.family'] = 'sans-serif'
+#plt.rcParams['axes.unicode_minus'] = False  # Fix minus signs
 plt.rcParams['figure.dpi'] = 300
 plt.rcParams['savefig.dpi'] = 300
 plt.rcParams['path.simplify'] = False  # Don't simplify paths for better quality
@@ -30,11 +37,11 @@ plt.rcParams['text.usetex'] = False  # Disable LaTeX by default
 plt.style.use('default')  # Reset to default style for clean rendering
 
 # 检查字体是否可用
-font_names = [f.name for f in fm.fontManager.ttflist]
-chinese_fonts = [f for f in font_names if any(name in f for name in ['PingFang', 'Microsoft', 'SimHei', 'Arial Unicode'])]
-if chinese_fonts:
-    plt.rcParams['font.sans-serif'] = chinese_fonts[0]
-    print(chinese_fonts[0])
+#font_names = [f.name for f in fm.fontManager.ttflist]
+#chinese_fonts = [f for f in font_names if any(name in f for name in ['PingFang', 'Microsoft', 'SimHei', 'Arial Unicode'])]
+#if chinese_fonts:
+#    plt.rcParams['font.sans-serif'] = chinese_fonts[0]
+#    print(chinese_fonts[0])
 
 # 部门工序定义
 def get_department_steps(process_type=None):
