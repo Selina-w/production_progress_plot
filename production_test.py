@@ -35,38 +35,18 @@ def load_user_data(user_id):
             return data
     return {"all_styles": []}
 
-# ✅ Inject custom font using CSS
-font_css = """
-<style>
-@font-face {
-    font-family: 'SimHei';
-    src: url('/static/simhei.ttf') format('truetype');
-}
-html, body, * {
-    font-family: 'SimHei', sans-serif;
-}
-</style>
-"""
+
 # ✅ Define the font path (Make sure this path is correct)
 font_path = "./static/simhei.ttf"
 
-# ✅ Load font manually
-prop = fm.FontProperties(fname=font_path)
-
-# ✅ Set as the global Matplotlib font
-mpl.rcParams["font.family"] = prop.get_name()
-mpl.rcParams["axes.unicode_minus"] = False  # Ensure minus signs display correctly
-
-# ✅ Check if the font is detected
-st.write(f"Loaded font: {prop.get_name()}")
-
-# ✅ List all available fonts Matplotlib can find
-available_fonts = sorted(f.name for f in fm.findSystemFonts(fontpaths=["./static"], fontext='ttf'))
-st.write("Available fonts:", available_fonts)
-
-st.markdown(font_css, unsafe_allow_html=True)
-plt.rcParams['font.sans-serif']=['SimHei'] 
-#plt.rcParams['font.sans-serif'] = [ 'Arial Unicode MS','PingFang HK', 'Songti SC']
+try:
+    prop = fm.FontProperties(fname=font_path)
+    st.write(f"✅ Loaded font name: {prop.get_name()}")
+except Exception as e:
+    st.write(f"⚠️ Error loading font: {e}")
+    
+#plt.rcParams['font.sans-serif']=['SimHei'] 
+plt.rcParams['font.sans-serif'] = [ 'Arial Unicode MS','PingFang HK', 'Songti SC']
 #plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['axes.unicode_minus'] = False  # Fix minus signs
 plt.rcParams['figure.dpi'] = 300
