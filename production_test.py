@@ -37,26 +37,26 @@ def load_user_data(user_id):
 
 
 # ✅ Define the font path (Make sure this path is correct)
-font_path = "./static/simhei.ttf"
+simhei_path = "./static/simhei.ttf"
+arial_unicode_path = "./static/arial unicode ms.otf"
 
-try:
-    prop = fm.FontProperties(fname=font_path)
-    st.write(f"✅ Loaded font name: {prop.get_name()}")
-except Exception as e:
-    st.write(f"⚠️ Error loading font: {e}")
+# ✅ Load fonts
+simhei_prop = fm.FontProperties(fname=simhei_path)
+arial_unicode_prop = fm.FontProperties(fname=arial_unicode_path)
 
-font_names = sorted(set(f.name for f in fm.fontManager.ttflist))
-# ✅ Register SimHei with Matplotlib's font manager
-fm.fontManager.addfont(font_path)  # Manually add the font
-# ✅ Display in Streamlit
-st.write("Default Matplotlib Fonts:", font_names)
-chinese_fonts = [f for f in font_names if any(name in f for name in ['SimHei', 'PingFang', 'Microsoft', 'Arial Unicode'])]
-st.write("Available Chinese Fonts:", chinese_fonts)
-mpl.rcParams["font.family"] = prop.get_name()
+# ✅ Register fonts with Matplotlib
+fm.fontManager.addfont(simhei_path)
+fm.fontManager.addfont(arial_unicode_path)
+
+# ✅ Apply fonts globally
+mpl.rcParams["font.family"] = arial_unicode_prop.get_name()  # Use SimHei as primary
+mpl.rcParams["font.sans-serif"] = [simhei_prop.get_name(), arial_unicode_prop.get_name()]  # Add Arial Unicode as fallback
+mpl.rcParams["axes.unicode_minus"] = False  # Fix minus signs
+
 # ✅ Verify the new font is set
 st.write("Matplotlib is now using font:", mpl.rcParams["font.family"])
 # ✅ Force Matplotlib to only use SimHei.ttf
-mpl.rcParams["font.family"] = prop.get_name()
+#mpl.rcParams["font.family"] = prop.get_name()
 #mpl.rcParams["font.sans-serif"] = [prop.get_name()]
 mpl.rcParams["axes.unicode_minus"] = False  # Fix minus sign display
 mpl.rcParams["figure.dpi"] = 300
