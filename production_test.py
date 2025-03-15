@@ -54,7 +54,7 @@ plt.style.use('default')  # Reset to default style for clean rendering
 
 # 检查字体是否可用
 font_names = [f.name for f in fm.fontManager.ttflist]
-chinese_fonts = [f for f in font_names if any(name in f for name in ['PingFang', 'Microsoft', 'SimHei', 'Arial Unicode'])]
+chinese_fonts = [f for f in font_names if any(name in f for name in ['PingFang', 'Microsoft', 'Arial Unicode'])]
 if chinese_fonts:
     plt.rcParams['font.sans-serif'] = chinese_fonts[0]
     print(chinese_fonts[0])
