@@ -13,14 +13,10 @@ import matplotlib as mpl
 
 font_path = "./simhei.ttf"  # Ensure this is correct
 
-prop = fm.FontProperties(fname=font_path)
-
-# ✅ Check if Matplotlib can recognize the font
-print(f"Font loaded: {prop.get_name()}")
-
-# ✅ List all available fonts that Matplotlib can see
-available_fonts = sorted(f.name for f in fm.findSystemFonts(fontpaths=["./"], fontext='ttf'))
-st.write("Available fonts:", available_fonts)
+if os.path.exists(font_path):
+    st.write("✅ Font file exists!")
+else:
+    st.write("⚠️ Font file NOT found! Check the path.")
 
 
 #plt.rcParams['font.sans-serif'] = ['PingFang HK', 'Songti SC', 'Arial Unicode MS']
