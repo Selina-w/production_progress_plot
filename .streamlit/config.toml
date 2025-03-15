@@ -1,4 +1,2 @@
 [server]
 enableStaticServing = true
-[theme]
-font="SimHei"
