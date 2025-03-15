@@ -1,2 +1,4 @@
 [server]
 enableStaticServing = true
+[theme]
+font=“Source Sans Pro”
