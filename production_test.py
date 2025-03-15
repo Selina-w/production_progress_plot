@@ -40,7 +40,7 @@ font_css = """
 <style>
 @font-face {
     font-family: 'SimHei';
-    src: url('/static/SimHei.ttf') format('truetype');
+    src: url('/static/simhei.ttf') format('truetype');
 }
 html, body, * {
     font-family: 'SimHei', sans-serif;
@@ -48,7 +48,7 @@ html, body, * {
 </style>
 """
 # ✅ Define the font path (Make sure this path is correct)
-font_path = "./static/SimHei.ttf"
+font_path = "./static/simhei.ttf"
 
 # ✅ Load font manually
 prop = fm.FontProperties(fname=font_path)
