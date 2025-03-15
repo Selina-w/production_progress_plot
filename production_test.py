@@ -56,7 +56,9 @@ fig.savefig("test_plot.png", dpi=300, bbox_inches="tight")
 
 # ✅ Display in Streamlit
 st.image("test_plot.png")
-
+st.write(f"Matplotlib using font: {prop.get_name()}")
+available_fonts = [f.name for f in fm.findSystemFonts(fontpaths=["./static"], fontext='ttf')]
+st.write("Available fonts:", available_fonts)
 # ✅ Force Matplotlib to only use SimHei.ttf
 mpl.rcParams["font.family"] = prop.get_name()
 mpl.rcParams["font.sans-serif"] = [prop.get_name()]
