@@ -52,6 +52,8 @@ font_names = sorted(set(f.name for f in fm.fontManager.ttflist))
 
 # ✅ Display in Streamlit
 st.write("Default Matplotlib Fonts:", font_names)
+chinese_fonts = [f for f in font_names if any(name in f for name in ['SimHei', 'PingFang', 'Microsoft', 'Arial Unicode'])]
+st.write("Available Chinese Fonts:", chinese_fonts)
 
 # ✅ Apply fonts globally
 mpl.rcParams["font.family"] = arial_unicode_prop.get_name()  # Use SimHei as primary
