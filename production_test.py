@@ -49,7 +49,7 @@ arial_unicode_prop = fm.FontProperties(fname=arial_unicode_path)
 #fm.fontManager.addfont(arial_unicode_path)
 # ✅ Get all fonts Matplotlib recognizes
 mpl.get_cachedir()
-!rm -rf ~/.cache/mpl
+rm -rf ~/.cache/mpl
 mpl.rcParams.update(matplotlib.rcParamsDefault)
 fm._load_fontmanager()  # Reload Matplotlib font cache
 
