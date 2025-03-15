@@ -52,7 +52,7 @@ fm.fontManager.addfont(font_path)  # Manually add the font
 st.write("Default Matplotlib Fonts:", font_names)
 chinese_fonts = [f for f in font_names if any(name in f for name in ['SimHei', 'PingFang', 'Microsoft', 'Arial Unicode'])]
 st.write("Available Chinese Fonts:", chinese_fonts)
-
+mpl.rcParams["font.family"] = prop.get_name()
 # ✅ Verify the new font is set
 st.write("Matplotlib is now using font:", mpl.rcParams["font.family"])
 # ✅ Force Matplotlib to only use SimHei.ttf
