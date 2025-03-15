@@ -44,7 +44,19 @@ try:
     st.write(f"✅ Loaded font name: {prop.get_name()}")
 except Exception as e:
     st.write(f"⚠️ Error loading font: {e}")
-    
+
+# ✅ Create a test plot with SimHei applied explicitly
+fig, ax = plt.subplots()
+ax.set_title("示例标题 - 测试中文字体", fontproperties=prop)
+ax.set_xlabel("时间", fontproperties=prop)
+ax.set_ylabel("进度", fontproperties=prop)
+
+# ✅ Save figure with the correct font
+fig.savefig("test_plot.png", dpi=300, bbox_inches="tight")
+
+# ✅ Display in Streamlit
+st.image("test_plot.png")
+
 #plt.rcParams['font.sans-serif']=['SimHei'] 
 plt.rcParams['font.sans-serif'] = [ 'Arial Unicode MS','PingFang HK', 'Songti SC','SimHei']
 #plt.rcParams['font.family'] = 'sans-serif'
