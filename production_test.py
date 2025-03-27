@@ -139,8 +139,8 @@ def calculate_schedule(sewing_start_date, process_type, confirmation_period, ord
     
     if process_type in ["满花局花绣花", "满花局花"]:
         pre_confirmation["局花样品"] = {"时间点": X + timedelta(days=24)}
-    else:
-        pre_confirmation.setdefault("局花样品", {})["时间点"] = X + timedelta(days=23)
+    elif "局花样品" in pre_confirmation: 
+        pre_confirmation["局花样品"]["时间点"] = X + timedelta(days=23)
 
     # 计算 版型 和 代用样品发送
     process_timeline = {
