@@ -1,19 +1,11 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-import networkx as nx
-import numpy as np
-from datetime import datetime, timedelta
-import matplotlib.font_manager as fm
-import io
-import tempfile
-import os
-import zipfile
-import matplotlib as mpl
+import m
 import json
 import pathlib
 import openpyxl
 from openpyxl.styles import Font, Border, Alignment, PatternFill
+import shutil
 
 
 # Create data directory if it doesn't exist
@@ -187,6 +179,279 @@ def get_department_steps_beibei(process_type=None, confirmation_period = None):
 
     # If "满花局花绣花", return all departments
     return all_departments
+
+def get_department_steps_bushu(process_type=None, confirmation_period = None):
+    """Get department steps based on process type"""
+    all_departments = {
+        "面料": ["棉纱", "毛坯", "光坯", "物理检测验布"],
+        "满花": ["满花", "满花后整", "物理检测"],
+        "裁剪": ["裁剪"],
+        "局花": ["局花", "物理检测"],
+        "绣花": ["绣花", "物理检测"],
+        "配片": ["配片"],
+        "滚领": ["滚领布"],
+        "辅料": ["辅料", "物理检测"],
+        "缝纫": ["缝纫开始", "缝纫结束"],
+        "后整": ["检验", "包装", "检针装箱"]
+    }
+    
+    # If no process type is specified or confirmation_period == "无库存棉纱", return all departments
+    #if process_type is None or confirmation_period == "无库存棉纱":
+    
+
+    # Handle inventory-related process types
+    if confirmation_period == "无库存毛坯":
+        # Remove "棉纱" from "面料"
+        all_departments["面料"] = ["毛坯", "光坯", "物理检测验布"]
+        
+    elif confirmation_period == "无库存光坯":
+        # Remove "棉纱" and "毛坯" from "面料"
+        all_departments["面料"] = ["光坯", "物理检测验布"]
+        
+    elif confirmation_period == "有库存光坯":
+        # Remove "面料" department entirely
+        all_departments.pop("面料", None)
+        
+
+    # Define exclusions for different process types
+    exclusion_map = {
+        "满花局花": ["绣花"],
+        "满花绣花": ["局花"],
+        "局花绣花": ["满花"],
+        "满花": ["局花", "绣花"],
+        "局花": ["满花", "绣花"],
+        "绣花": ["满花", "局花"]
+    }
+
+    # If process_type is invalid, return all departments
+    if process_type not in exclusion_map and process_type != "满花局花绣花":
+        raise ValueError(f"Invalid process_type: {process_type}")
+
+    # Exclude specified departments
+    if process_type in exclusion_map:
+        filtered_departments = {k: v for k, v in all_departments.items() if k not in exclusion_map[process_type]}
+        return filtered_departments
+
+    # If "满花局花绣花", return all departments
+    return all_departments
+
+
+def calculate_schedule_bushu(sewing_start_date, process_type, confirmation_period, order_quantity, daily_production, start_time_period="上午"):
+    """ 计算整个生产流程的时间安排 """
+    schedule = {}
+    
+    # 将所有工序的时间初始化为字典
+    for dept, steps in get_department_steps_bushu(process_type, confirmation_period).items():
+        schedule[dept] = {}
+    
+    Y = sewing_start_date  # 订单缝纫开始日期
+    if confirmation_period == '无库存棉纱':
+        if process_type == "满花局花绣花":
+            X = Y - timedelta(days=19)
+        elif process_type == "满花局花":
+            X = Y - timedelta(days=16)
+        elif process_type == "满花绣花":
+            X = Y - timedelta(days=17)
+        elif process_type == "局花绣花":
+            X = Y - timedelta(days=16)
+        elif process_type == "满花":
+            X = Y - timedelta(days=14)
+        elif process_type == "局花":
+            X = Y - timedelta(days=13)
+        elif process_type == "绣花":
+            X = Y - timedelta(days=14)
+        else:
+            raise ValueError(f"Invalid process_type: {process_type}")
+
+    elif confirmation_period == '无库存毛坯':
+        if process_type == "满花局花绣花":
+            X = Y - timedelta(days=16)
+        elif process_type == "满花局花":
+            X = Y - timedelta(days=13)
+        elif process_type == "满花绣花":
+            X = Y - timedelta(days=14)
+        elif process_type == "局花绣花":
+            X = Y - timedelta(days=13)
+        elif process_type == "满花":
+            X = Y - timedelta(days=11)
+        elif process_type == "局花":
+            X = Y - timedelta(days=10)
+        elif process_type == "绣花":
+            X = Y - timedelta(days=11)
+        else:
+            raise ValueError(f"Invalid process_type: {process_type}")
+        
+    elif confirmation_period == '无库存光坯':
+        if process_type == "满花局花绣花":
+            X = Y - timedelta(days=14)
+        elif process_type == "满花局花":
+            X = Y - timedelta(days=11)
+        elif process_type == "满花绣花":
+            X = Y - timedelta(days=12)
+        elif process_type == "局花绣花":
+            X = Y - timedelta(days=11)
+        elif process_type == "满花":
+            X = Y - timedelta(days=9)
+        elif process_type == "局花":
+            X = Y - timedelta(days=8)
+        elif process_type == "绣花":
+            X = Y - timedelta(days=9)
+        else:
+            raise ValueError(f"Invalid process_type: {process_type}")
+        
+    elif confirmation_period == '有库存光坯':
+        if process_type == "满花局花绣花":
+            X = Y - timedelta(days=10)
+        elif process_type == "满花局花":
+            X = Y - timedelta(days=7)
+        elif process_type == "满花绣花":
+            X = Y - timedelta(days=8)
+        elif process_type == "局花绣花":
+            X = Y - timedelta(days=7)
+        elif process_type == "满花":
+            X = Y - timedelta(days=5)
+        elif process_type == "局花":
+            X = Y - timedelta(days=4)
+        elif process_type == "绣花":
+            X = Y - timedelta(days=5)
+        else:
+            raise ValueError(f"Invalid process_type: {process_type}")
+
+    # 1. 计算面料
+    if confirmation_period == '无库存棉纱':
+        schedule["面料"]["棉纱"] = {"时间点": X + timedelta(days=3)}
+        schedule["面料"]["毛坯"] = {"时间点": X + timedelta(days=5)}
+        schedule["面料"]["光坯"] = {"时间点": X + timedelta(days=8)}
+        schedule["面料"]["物理检测验布"] = {"时间点": X + timedelta(days=9)}
+    elif confirmation_period == '无库存毛坯':
+        schedule["面料"]["毛坯"] = {"时间点": X + timedelta(days=2)}
+        schedule["面料"]["光坯"] = {"时间点": X + timedelta(days=5)}
+        schedule["面料"]["物理检测验布"] = {"时间点": X + timedelta(days=6)}
+    elif confirmation_period == '无库存光坯':
+        schedule["面料"]["光坯"] = {"时间点": X + timedelta(days=3)}
+        schedule["面料"]["物理检测验布"] = {"时间点": X + timedelta(days=4)}
+    
+    # 2. 计算满花和裁剪流程
+    if "满花" in process_type:
+        if confirmation_period == '无库存棉纱':
+            schedule["满花"]["满花"] = {"时间点": X + timedelta(days=10)}
+        elif confirmation_period == '无库存毛坯':
+            schedule["满花"]["满花"] = {"时间点": X + timedelta(days=7)}
+        elif confirmation_period == '无库存光坯':
+            schedule["满花"]["满花"] = {"时间点": X + timedelta(days=5)}
+        elif confirmation_period == '有库存光坯':
+            schedule["满花"]["满花"] = {"时间点": X + timedelta(days=1)}
+        schedule["满花"]["满花后整"] = {"时间点": schedule["满花"]["满花"]["时间点"] + timedelta(days=1)}
+        schedule["满花"]["物理检测"] = {"时间点": schedule["满花"]["满花后整"]["时间点"] + timedelta(days=1)}
+        schedule["裁剪"]["裁剪"] = {"时间点": schedule["满花"]["物理检测"]["时间点"] + timedelta(days=1)}
+    else:
+        if confirmation_period != '有库存光坯':
+            schedule["裁剪"]["裁剪"] = {"时间点": schedule["面料"]["物理检测验布"]["时间点"] + timedelta(days=1)}
+        else:
+            schedule["裁剪"]["裁剪"] = {"时间点": X + timedelta(days=1)}
+
+    # 3. 计算局花流程
+    if "局花" in process_type:
+        schedule["局花"]["局花"] = {"时间点": schedule["裁剪"]["裁剪"]["时间点"] + timedelta(days=1)}
+        schedule["局花"]["物理检测"] = {"时间点": schedule["局花"]["局花"]["时间点"] + timedelta(days=1)}
+    # 4. 计算绣花流程
+    if "绣花" in process_type:
+        if "局花" in process_type:
+            schedule["绣花"]["绣花"] = {"时间点": schedule["局花"]["物理检测"]["时间点"] + timedelta(days=2)}
+        else:
+            schedule["绣花"]["绣花"] = {"时间点": schedule["裁剪"]["裁剪"]["时间点"] + timedelta(days=2)}
+        schedule["绣花"]["物理检测"] = {"时间点": schedule["绣花"]["绣花"]["时间点"] + timedelta(days=1)}
+
+    # 4. 计算配片
+    if "绣花" in process_type:
+        schedule["配片"]["配片"] = {"时间点": schedule["绣花"]["物理检测"]["时间点"]}
+    else:
+        if "局花" in process_type:
+            schedule["配片"]["配片"] = {"时间点": schedule["局花"]["物理检测"]["时间点"]}
+        else:
+            schedule["配片"]["配片"] = {"时间点": schedule["裁剪"]["裁剪"]["时间点"]}
+    
+    # 5. 计算滚领
+    schedule["滚领"]["滚领布"] = {"时间点": schedule["配片"]["配片"]["时间点"]}
+
+    # 6. 计算辅料流程（并行）--从这开始
+    if confirmation_period == '无库存棉纱' and process_type == "满花局花绣花":
+        schedule["辅料"]["辅料"] = {"时间点":X + timedelta(days=15)}
+        schedule["辅料"]["物理检测"] = {"时间点": schedule["辅料"]["辅料"]["时间点"]+timedelta(days=1)}
+    else:
+        schedule["辅料"]["辅料"] = {"时间点":schedule["滚领"]["滚领布"]["时间点"] - timedelta(days=1)}
+        schedule["辅料"]["物理检测"] = {"时间点": schedule["滚领"]["滚领布"]["时间点"]}
+
+    # 7. 计算缝纫工艺
+    schedule["缝纫"]["缝纫开始"] = {"时间点": sewing_start_date, "备注": start_time_period} #{"时间点": schedule["缝纫"]["缝纫工艺"]["时间点"] + timedelta(days=2)}
+    
+    # 计算缝纫结束时间，根据小数部分决定是当天上午结束还是下午结束或第二天
+    sewing_days_float = order_quantity * 1.05 / daily_production
+    sewing_days_int = int(sewing_days_float)
+    sewing_days_decimal = sewing_days_float - sewing_days_int
+    
+    if sewing_days_decimal <= 0.5:
+        # 如果小数部分小于等于0.5，则当天中午结束
+        sewing_end_date = schedule["缝纫"]["缝纫开始"]["时间点"] + timedelta(days=sewing_days_int)
+        schedule["缝纫"]["缝纫结束"] = {
+            "时间点": sewing_end_date,
+            "备注": "中午结束" if sewing_days_decimal > 0 else "全天"
+        }
+    else:
+        # 如果小数部分大于0.5，则需要多一天
+        sewing_end_date = schedule["缝纫"]["缝纫开始"]["时间点"] + timedelta(days=sewing_days_int + 1)
+        schedule["缝纫"]["缝纫结束"] = {
+            "时间点": sewing_end_date,
+            "备注": "全天"
+        }
+
+    # 考虑开始时间是上午还是下午
+    if start_time_period == "上午":
+        if sewing_days_decimal <= 0.5:
+            # 如果小数部分小于等于0.5，则当天下午结束
+            sewing_end_date = schedule["缝纫"]["缝纫开始"]["时间点"] + timedelta(days=sewing_days_int)
+            schedule["缝纫"]["缝纫结束"] = {
+                "时间点": sewing_end_date,
+                "备注": "下午" if sewing_days_decimal > 0 else "上午"
+            }
+        else:
+            # 如果小数部分大于0.5，则第二天上午结束
+            sewing_end_date = schedule["缝纫"]["缝纫开始"]["时间点"] + timedelta(days=sewing_days_int + 1)
+            schedule["缝纫"]["缝纫结束"] = {
+                "时间点": sewing_end_date,
+                "备注": "上午"
+            }
+    else:  # 下午开始
+        if sewing_days_decimal <= 0:
+            # 如果刚好整数天，则最后一天下午结束
+            sewing_end_date = schedule["缝纫"]["缝纫开始"]["时间点"] + timedelta(days=sewing_days_int)
+            schedule["缝纫"]["缝纫结束"] = {
+                "时间点": sewing_end_date,
+                "备注": "下午"
+            }
+        elif sewing_days_decimal <= 0.5:
+            # 如果小数部分小于等于0.5，则第二天上午结束
+            sewing_end_date = schedule["缝纫"]["缝纫开始"]["时间点"] + timedelta(days=sewing_days_int + 1)
+            schedule["缝纫"]["缝纫结束"] = {
+                "时间点": sewing_end_date,
+                "备注": "上午"
+            }
+        else:
+            # 如果小数部分大于0.5，则第二天下午结束
+            sewing_end_date = schedule["缝纫"]["缝纫开始"]["时间点"] + timedelta(days=sewing_days_int + 1)
+            schedule["缝纫"]["缝纫结束"] = {
+                "时间点": sewing_end_date,
+                "备注": "下午"
+            }
+
+
+    # 8. 计算后整工艺
+    schedule["后整"]["检验"] = {"时间点": schedule["缝纫"]["缝纫结束"]["时间点"]+ timedelta(days=1)}
+    schedule["后整"]["包装"] = {"时间点": schedule["缝纫"]["缝纫结束"]["时间点"]+ timedelta(days=1)}
+    schedule["后整"]["检针装箱"] = {"时间点": schedule["缝纫"]["缝纫结束"]["时间点"]+ timedelta(days=1)}
+    
+
+    return schedule
 
 def calculate_schedule_beibei(sewing_start_date, process_type, confirmation_period, order_quantity, daily_production, start_time_period="上午"):
     """ 计算整个生产流程的时间安排 """
@@ -1116,25 +1381,25 @@ def calculate_schedule(sewing_start_date, process_type, confirmation_period, ord
 
     return schedule
 
-# 重新安排生产组中款式的缝纫开始时间
+# 重新安排生产班组中款式的缝纫开始时间
 def rearrange_styles_by_production_group(styles):
     """
-    重新安排同一生产组内款式的缝纫开始时间
+    重新安排同一生产班组内款式的缝纫开始时间
     确保同一生产顺序的款式共享相同的开始时间
     确保下一个生产顺序的款式开始时间等于前一个生产顺序中最后一个款式的结束时间
     """
-    # 将款式按生产组分组
+    # 将款式按生产班组分组
     grouped_styles = {}
     for style in styles:
         group = style.get("production_group", "")
-        if not group:  # 如果没有生产组，跳过
+        if not group:  # 如果没有生产班组，跳过
             continue
         
         if group not in grouped_styles:
             grouped_styles[group] = []
         grouped_styles[group].append(style)
     
-    # 对每个生产组内的款式进行处理
+    # 对每个生产班组内的款式进行处理
     rearranged_styles = []
     for group, group_styles in grouped_styles.items():
         # 按照生产顺序进一步分组
@@ -1172,8 +1437,8 @@ def rearrange_styles_by_production_group(styles):
             
             for style in first_order_styles:
                 sewing_start_time = datetime.combine(style["sewing_start_date"], datetime.min.time())
-                company = style["company"]
-                if company == '龙兵':
+                production_mode = style["production_mode"]
+                if production_mode == '龙兵':
                     schedule = calculate_schedule(
                         sewing_start_time, 
                         style["process_type"], 
@@ -1182,7 +1447,7 @@ def rearrange_styles_by_production_group(styles):
                         style["daily_production"],
                         style["start_time_period"]
                     )
-                else:
+                elif production_mode == '贝贝':
                     schedule = calculate_schedule_beibei(
                         sewing_start_time, 
                         style["process_type"], 
@@ -1190,6 +1455,16 @@ def rearrange_styles_by_production_group(styles):
                         style["order_quantity"], 
                         style["daily_production"],
                         style["start_time_period"])
+                elif production_mode == '补数':
+                    schedule = calculate_schedule_bushu(
+                        sewing_start_time, 
+                        style["process_type"], 
+                        style["cycle"], 
+                        style["order_quantity"], 
+                        style["daily_production"],
+                        style["start_time_period"])
+                else:
+                    raise ValueError(f"Invalid production_mode: {production_mode}")
                 
                 end_time = schedule["缝纫"]["缝纫结束"]["时间点"]
                 end_remark = schedule["缝纫"]["缝纫结束"].get("备注", "下午结束")
@@ -1224,8 +1499,8 @@ def rearrange_styles_by_production_group(styles):
                 
                 for style in current_order_styles:
                     sewing_start_time = datetime.combine(style["sewing_start_date"], datetime.min.time())
-                    company = style["company"]
-                    if company == '龙兵':
+                    production_mode = style["production_mode"]
+                    if production_mode == '龙兵':
                         schedule = calculate_schedule(
                             sewing_start_time, 
                             style["process_type"], 
@@ -1234,7 +1509,7 @@ def rearrange_styles_by_production_group(styles):
                             style["daily_production"],
                             style["start_time_period"]
                         )
-                    else:
+                    elif production_mode == '贝贝':
                         schedule = calculate_schedule_beibei(
                             sewing_start_time, 
                             style["process_type"], 
@@ -1242,6 +1517,16 @@ def rearrange_styles_by_production_group(styles):
                             style["order_quantity"], 
                             style["daily_production"],
                             style["start_time_period"])
+                    elif production_mode == '补数':
+                        schedule = calculate_schedule_bushu(
+                            sewing_start_time, 
+                            style["process_type"], 
+                            style["cycle"], 
+                            style["order_quantity"], 
+                            style["daily_production"],
+                            style["start_time_period"])
+                    else:
+                        raise ValueError(f"Invalid production_mode: {production_mode}")
                     
                     end_time = schedule["缝纫"]["缝纫结束"]["时间点"]
                     end_remark = schedule["缝纫"]["缝纫结束"].get("备注", "下午结束")
@@ -1250,7 +1535,7 @@ def rearrange_styles_by_production_group(styles):
                         latest_end_time = end_time
                         latest_end_remark = end_remark
     
-    # 添加没有生产组的款式
+    # 添加没有生产班组的款式
     for style in styles:
         if not style.get("production_group", ""):
             rearranged_styles.append(style)
@@ -1277,8 +1562,8 @@ def generate_excel_report(styles):
         else:
             # 否则重新计算schedule
             sewing_start_time = datetime.combine(style["sewing_start_date"], datetime.min.time()) if not isinstance(style["sewing_start_date"], datetime) else style["sewing_start_date"]
-            company = style["company"]
-            if company == '龙兵':
+            production_mode = style["production_mode"]
+            if production_mode == '龙兵':
                 schedule = calculate_schedule(
                     sewing_start_time, 
                     style["process_type"], 
@@ -1287,7 +1572,7 @@ def generate_excel_report(styles):
                     style["daily_production"],
                     style.get("start_time_period", "上午")
                 )
-            else:
+            elif production_mode == '贝贝':
                 schedule = calculate_schedule_beibei(
                     sewing_start_time, 
                     style["process_type"], 
@@ -1295,6 +1580,16 @@ def generate_excel_report(styles):
                     style["order_quantity"], 
                     style["daily_production"],
                     style.get("start_time_period", "上午"))
+            elif production_mode == '补数':
+                schedule = calculate_schedule_bushu(
+                    sewing_start_time, 
+                    style["process_type"], 
+                    style["cycle"], 
+                    style["order_quantity"], 
+                    style["daily_production"],
+                    style.get("start_time_period", "上午"))
+            else:
+                raise ValueError(f"Invalid production_mode: {production_mode}")
         
         # 收集每个步骤的日期和备注
         for dept, steps in schedule.items():
@@ -1307,7 +1602,7 @@ def generate_excel_report(styles):
                 
                 all_dates.add(date)
                 
-                # 对于缝纫步骤，添加生产组信息
+                # 对于缝纫步骤，添加生产班组信息
                 if dept == "缝纫":
                     step_info = f"{dept}-{step}"
                     if style.get("production_group"):
@@ -1341,15 +1636,20 @@ def generate_excel_report(styles):
         # Find the style object to get company information
         style = next((s for s in styles if s["style_number"] == style_number), None)
         row = {
-            "公司": style["company"] if style else "",
+            "客户": style["company"] if style else "",
             "款号": style_number
         }
+        if style and "delivery_date" in style:
+            row["交期"] = style["delivery_date"]
         for date in all_dates:
             row[date] = style_steps[style_number].get(date, "")
         data.append(row)
     
     df = pd.DataFrame(data)
-    columns = ["公司", "款号"] + [col for col in df.columns if col not in ["公司", "款号"]]
+    columns = ["客户", "款号"]
+    if any("delivery_date" in s for s in styles):
+        columns.append("交期")
+    columns += [col for col in df.columns if col not in ["客户", "款号", "交期"]]
     df = df[columns]
     # 保存为Excel文件
     excel_path = os.path.join(temp_dir, "生产计划报表.xlsx")
@@ -1478,7 +1778,7 @@ def generate_excel_report(styles):
                     
                 #     # 处理每一行
                 #     for i, line in enumerate(step_lines):
-                #         # 提取步骤名称（去除生产组信息和备注）
+                #         # 提取步骤名称（去除生产班组信息和备注）
                 #         step_name = line.split(' (')[0].split(' [')[0]
                         
                 #         # 查找匹配的步骤颜色
@@ -1494,14 +1794,166 @@ def generate_excel_report(styles):
                 #         if not color_found:
                 #             new_cell.font = openpyxl.styles.Font(color="FF000000")
     
-    # 冻结首行和款号列
-    #worksheet.freeze_panes = 'B2'  # Changed back to B2 to match original title method
-    worksheet.freeze_panes = 'C3'
+    # 冻结首行和款号列（如果有交期则冻结到交期列）
+    if "交期" in df.columns:
+        worksheet.freeze_panes = 'D3'
+    else:
+        worksheet.freeze_panes = 'C3'
     
     # 保存并关闭Excel文件
     writer.close()
     
     return excel_path
+
+
+def generate_department_wise_excel(styles):
+    """为每个部门生成单独的Excel报表，并打包为ZIP文件"""
+    import shutil
+    # 创建一个临时目录
+    temp_dir = tempfile.mkdtemp()
+    excel_paths = []
+    all_schedules = []
+    # 计算所有款式的计划
+    for style in styles:
+        sewing_start_time = datetime.combine(style["sewing_start_date"], datetime.min.time()) if not isinstance(style["sewing_start_date"], datetime) else style["sewing_start_date"]
+        production_mode = style["production_mode"]
+        if production_mode == '龙兵':
+            schedule = calculate_schedule(
+                sewing_start_time, 
+                style["process_type"], 
+                style["cycle"], 
+                style["order_quantity"], 
+                style["daily_production"],
+                style.get("start_time_period", "上午")
+            )
+        elif production_mode == '贝贝':
+            schedule = calculate_schedule_beibei(
+                sewing_start_time, 
+                style["process_type"], 
+                style["cycle"], 
+                style["order_quantity"], 
+                style["daily_production"],
+                style.get("start_time_period", "上午"))
+        elif production_mode == '补数':
+            schedule = calculate_schedule_bushu(
+                sewing_start_time, 
+                style["process_type"], 
+                style["cycle"], 
+                style["order_quantity"], 
+                style["daily_production"],
+                style.get("start_time_period", "上午"))
+        else:
+            raise ValueError(f"Invalid production_mode: {production_mode}")
+        for dept, steps in schedule.items():
+            for step, info in steps.items():
+                time_point = info["时间点"]
+                if hasattr(time_point, "date"):
+                    date = time_point.date()
+                else:
+                    date = time_point
+                step_data = {
+                    "客户": style["company"],
+                    "款号": style["style_number"],
+                    "生产班组": style.get("production_group", ""),
+                    "工序": style["process_type"],
+                    "部门": dept,
+                    "步骤": step,
+                    "日期": date,
+                    "备注": info.get("备注", "")
+                }
+                all_schedules.append(step_data)
+    df = pd.DataFrame(all_schedules)
+    departments = df["部门"].unique()
+    for dept in departments:
+        dept_data = df[df["部门"] == dept].copy()
+        dept_data = dept_data.sort_values(["日期", "款号"])
+        pivot_data = []
+        unique_styles = dept_data["款号"].unique()
+        unique_dates = sorted(dept_data["日期"].unique())
+        # Check if any style has delivery_date to determine if we need 交期 column
+        has_delivery_date = any("delivery_date" in style for style in styles)
+        for style in unique_styles:
+            style_data = dept_data[dept_data["款号"] == style]
+            row = {
+                "客户": style_data.iloc[0]["客户"],
+                "款号": style,
+                "生产班组": style_data.iloc[0]["生产班组"],
+                "工序": style_data.iloc[0]["工序"]
+            }
+            # 新增交期
+            # Add 交期 right after 工序 if any style has delivery_date
+            if has_delivery_date:
+                style_obj = next((s for s in styles if s["style_number"] == style), None)
+                if style_obj and "delivery_date" in style_obj:
+                    row["交期"] = style_obj["delivery_date"]
+                else:
+                    row["交期"] = ""
+            # style_obj = next((s for s in styles if s["style_number"] == style), None)
+            # if style_obj and "delivery_date" in style_obj:
+            #     row["交期"] = style_obj["delivery_date"]
+            for date in unique_dates:
+                date_steps = style_data[style_data["日期"] == date]
+                if len(date_steps) > 0:
+                    step_info = []
+                    for _, step_row in date_steps.iterrows():
+                        step_text = step_row["步骤"]
+                        if step_row["备注"]:
+                            step_text += f" [{step_row['备注']}]"
+                        step_info.append(step_text)
+                    row[date] = "\n".join(step_info)
+                else:
+                    row[date] = ""
+            pivot_data.append(row)
+        dept_df = pd.DataFrame(pivot_data)
+        excel_path = os.path.join(temp_dir, f"{dept}部门生产计划报表.xlsx")
+        writer = pd.ExcelWriter(excel_path, engine='openpyxl')
+        dept_df.to_excel(writer, index=False, sheet_name=dept, startrow=1)
+        workbook = writer.book
+        worksheet = writer.sheets[dept]
+        thin_border = openpyxl.styles.Border(
+            left=openpyxl.styles.Side(style='thin'),
+            right=openpyxl.styles.Side(style='thin'),
+            top=openpyxl.styles.Side(style='thin'),
+            bottom=openpyxl.styles.Side(style='thin')
+        )
+        title_cell = worksheet['A1']
+        title_cell.value = f"{dept}部门生产计划"
+        worksheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(dept_df.columns))
+        title_cell.font = openpyxl.styles.Font(bold=True, size=16)
+        title_cell.alignment = openpyxl.styles.Alignment(horizontal='center', vertical='center')
+        for i, col in enumerate(dept_df.columns):
+            col_letter = openpyxl.utils.get_column_letter(i + 1)
+            if col in ["款号", "生产班组"]:
+                column_width = max(len(str(col)), dept_df[col].astype(str).map(len).max())
+            else:
+                column_width = 15
+            worksheet.column_dimensions[col_letter].width = min(column_width + 2, 30)
+            for row in range(1, len(dept_df) + 3):
+                cell = worksheet[f"{col_letter}{row}"]
+                cell.border = thin_border
+                if row == 2:
+                    cell.alignment = openpyxl.styles.Alignment(horizontal='center', vertical='center')
+                elif row == 1:
+                    continue
+                elif col in ["款号", "生产班组"]:
+                    cell.alignment = openpyxl.styles.Alignment(horizontal='left', vertical='top', wrap_text=True)
+                else:
+                    cell.alignment = openpyxl.styles.Alignment(horizontal='left', vertical='top', wrap_text=True)
+        # Set freeze panes correctly
+        if has_delivery_date:
+            worksheet.freeze_panes = 'F3'  # Freeze up to 交期 column (A,B,C,D,E = 客户,款号,生产班组,工序,交期)
+        else:
+            worksheet.freeze_panes = 'E3'   # Freeze up to 工序 column (A,B,C,D = 客户,款号,生产班组,工序)
+        
+        # worksheet.freeze_panes = 'E3'
+        writer.close()
+        excel_paths.append(excel_path)
+    # 打包为ZIP
+    zip_path = os.path.join(temp_dir, "部门生产计划报表.zip")
+    with zipfile.ZipFile(zip_path, 'w') as zipf:
+        for excel_file in excel_paths:
+            zipf.write(excel_file, os.path.basename(excel_file))
+    return zip_path
 
         
 # 画时间线
@@ -1819,7 +2271,7 @@ def plot_timeline(schedule, process_type, confirmation_period):
         style_number_wrapped = [style_number_text[i:i+30] for i in range(0, len(style_number_text), 30)]
         # Add production group if available
         if "production_group" in st.session_state and st.session_state["production_group"]:
-            group_text = f"生产组: {st.session_state['production_group']}"
+            group_text = f"生产班组: {st.session_state['production_group']}"
             style_number_wrapped.append(group_text)
         title_text += "\n" + "\n".join(style_number_wrapped)
     ax.set_title(title_text, fontsize=30, fontweight='bold', y=1.02 + 0.02 * (len(style_number_wrapped) if 'style_number_wrapped' in locals() else 0), fontproperties=prop)
@@ -1852,8 +2304,8 @@ def generate_department_wise_plots(styles):
     for style in styles:
         sewing_start_time = datetime.combine(style["sewing_start_date"], datetime.min.time())
         start_time_period = style.get("start_time_period", "上午")  # 获取上午/下午信息
-        company = style["company"]
-        if company == '龙兵':
+        production_mode = style["production_mode"]
+        if production_mode == '龙兵':
             schedule = calculate_schedule(
                 sewing_start_time, 
                 style["process_type"], 
@@ -1862,7 +2314,7 @@ def generate_department_wise_plots(styles):
                 style["daily_production"],
                 start_time_period
             )
-        else:
+        elif production_mode == '贝贝':
             schedule = calculate_schedule_beibei(
                 sewing_start_time, 
                 style["process_type"], 
@@ -1870,6 +2322,16 @@ def generate_department_wise_plots(styles):
                 style["order_quantity"], 
                 style["daily_production"],
                 start_time_period)
+        elif production_mode == '补数':
+            schedule = calculate_schedule_bushu(
+                sewing_start_time, 
+                style["process_type"], 
+                style["cycle"], 
+                style["order_quantity"], 
+                style["daily_production"],
+                start_time_period)
+        else:
+            raise ValueError(f"Invalid production_mode: {production_mode}")
         for dept, steps in schedule.items():
             for step, data in steps.items():
                 # 创建一个新字典来存储步骤数据
@@ -2103,12 +2565,12 @@ def generate_department_wise_plots(styles):
             if original_style and "production_order" in original_style:
                 production_order = original_style["production_order"]
                 if production_group:
-                    y_labels.append(f"款号: {style} (生产组: {production_group}, 序号: {production_order})")
+                    y_labels.append(f"款号: {style} (生产班组: {production_group}, 序号: {production_order})")
                 else:
                     y_labels.append(f"款号: {style} (序号: {production_order})")
             else:
                 if production_group:
-                    y_labels.append(f"款号: {style} (生产组: {production_group})")
+                    y_labels.append(f"款号: {style} (生产班组: {production_group})")
                 else:
                     y_labels.append(f"款号: {style}")
         
@@ -2150,7 +2612,7 @@ def generate_department_wise_plots(styles):
             if len(group_data) == 0 or len(group_data["style_number"].unique()) == 0:
                 continue
 
-            # 为生产组图表也应用相似的排序逻辑
+            # 为生产班组图表也应用相似的排序逻辑
             # 1. 计算每个款式的最早步骤时间
             earliest_dates = group_data.groupby("style_number")["date"].min().reset_index()
             earliest_dates.rename(columns={"date": "earliest_date"}, inplace=True)
@@ -2261,12 +2723,12 @@ def generate_department_wise_plots(styles):
                 if original_style and "production_order" in original_style:
                     production_order = original_style["production_order"]
                     if production_group:
-                        y_labels.append(f"款号: {style} (生产组: {production_group}, 序号: {production_order})")
+                        y_labels.append(f"款号: {style} (生产班组: {production_group}, 序号: {production_order})")
                     else:
                         y_labels.append(f"款号: {style} (序号: {production_order})")
                 else:
                     if production_group:
-                        y_labels.append(f"款号: {style} (生产组: {production_group})")
+                        y_labels.append(f"款号: {style} (生产班组: {production_group})")
                     else:
                         y_labels.append(f"款号: {style}")
             
@@ -2276,14 +2738,14 @@ def generate_department_wise_plots(styles):
             ax.set_ylim(min(y_positions.values()) - 0.7, max(y_positions.values()) + 0.7)
             
             # Set title to include production group - using standard style
-            ax.set_title(f"{department} - 生产组: {group}",
+            ax.set_title(f"{department} - 生产班组: {group}",
                         fontsize=24,
                         fontweight='bold',
                         y=1.02, fontproperties=prop)
             ax.set_frame_on(False)
 
             # Save with production group in filename
-            group_fig_path = os.path.join(temp_dir, f"{department}_生产组_{group}.png")
+            group_fig_path = os.path.join(temp_dir, f"{department}_生产班组_{group}.png")
             fig.savefig(group_fig_path, dpi=300, bbox_inches="tight")
             plt.close(fig)
     
@@ -2299,32 +2761,36 @@ def generate_department_wise_plots(styles):
     
     return zip_path
 
-def get_cycle_options(company):
-    """Get valid cycle options based on company"""
-    if company == "龙兵":
+def get_cycle_options(production_mode):
+    """Get valid cycle options based on production_mode"""
+    if production_mode == "龙兵":
         return [7, 14, 30, "1个月交期+确认5天"]
-    elif company == "贝贝":
+    elif production_mode == "贝贝":
         return ["SC", "百货店"]
+    elif production_mode == "补数":
+        return ["无库存棉纱", "无库存毛坯", "无库存光坯", "有库存光坯"]
     else:
-        raise ValueError(f"Invalid company: {company}")
+        raise ValueError(f"Invalid production_mode: {production_mode}")
 
-def validate_cycle(company, cycle):
-    """Validate cycle value based on company"""
-    valid_options = get_cycle_options(company)
+def validate_cycle(production_mode, cycle):
+    """Validate cycle value based on production_mode"""
+    valid_options = get_cycle_options(production_mode)
     if cycle not in valid_options:
-        raise ValueError(f"Invalid cycle value for {company}: {cycle}. Valid options are: {valid_options}")
+        raise ValueError(f"Invalid cycle value for {production_mode}: {cycle}. Valid options are: {valid_options}")
     return cycle
 
-def convert_cycle_to_int(company, cycle):
-    """Convert cycle to int if possible based on company"""
-    if company == "龙兵":
+def convert_cycle_to_int(production_mode, cycle):
+    """Convert cycle to int if possible based on production_mode"""
+    if production_mode == "龙兵":
         if cycle == "1个月交期+确认5天":
             return cycle
         return int(cycle)
-    elif company == "贝贝":
+    elif production_mode == "贝贝":
+        return cycle
+    elif production_mode == "补数":
         return cycle
     else:
-        raise ValueError(f"Invalid company: {company}")
+        raise ValueError(f"Invalid production_mode: {production_mode}")
     
 def adjust_schedule(schedule, department, delayed_step, new_end_time):
     if department not in schedule or delayed_step not in schedule[department]:
@@ -2490,26 +2956,29 @@ else:
 
     # 添加Excel上传功能
     st.subheader("方式一：上传Excel文件")
-    uploaded_file = st.file_uploader("上传Excel文件 (必需列：款号、缝纫开始日期、缝纫开始时间、工序、确认周转周期、订单数量、日产量、生产组、生产顺序、公司)", type=['xlsx', 'xls'])
+    uploaded_file = st.file_uploader("上传Excel文件 (必需列：款号、缝纫开始日期、缝纫开始时间、工序、确认用时、订单数量、日产量、生产班组、生产顺序、客户)", type=['xlsx', 'xls'])
 
 
     if uploaded_file is not None:
         try:
             df = pd.read_excel(uploaded_file)
-            required_columns = ['款号', '缝纫开始日期', '缝纫开始时间', '工序', '确认周转周期', '订单数量', '日产量', '生产组', '生产顺序', '公司']
+            required_columns = ['款号', '缝纫开始日期', '缝纫开始时间', '工序', '确认用时', '订单数量', '日产量', '生产班组', '生产顺序', '客户', '排产模式']
             # 显示Excel可选列的说明
             st.info("""
             **Excel文件说明**:
-            * 必需列: 款号、缝纫开始日期、缝纫开始时间、工序、确认周转周期、订单数量、日产量、生产组
-            * 可选列: 生产顺序 (同一生产组内款式的排产顺序，相同顺序号的款式将在同一天开始生产)
+            * 必需列: 款号、缝纫开始日期、缝纫开始时间、工序、确认用时、订单数量、日产量、生产班组、排产模式、生产顺序 (同一生产班组内款式的排产顺序，相同顺序号的款式将在同一天开始生产)
+            * 可选列: 交期
             * 缝纫开始时间列应填写"上午"或"下午"
-            * 公司列应为: 龙兵 或 贝贝
+            * 排产模式列应为: 龙兵、贝贝、补数
             * 工序列应为以下之一: 
                 - 龙兵: 满花局花绣花、满花局花、满花绣花、局花绣花、满花、局花、绣花
                 - 贝贝: 满花局花绣花、满花局花、满花绣花、局花绣花、满花、局花、绣花、无印绣
-            * 确认周转周期:
+                - 补数: 满花局花绣花、满花局花、满花绣花、局花绣花、满花、局花、绣花
+            * 确认用时:
               - 龙兵: 7, 14, 30, 1个月交期+确认5天
               - 贝贝: SC, 百货店
+              - 补数: 无库存棉纱、无库存毛坯、无库存光坯、有库存光坯
+            * 客户列可自由输入
             """)
             
             # Check if all required columns exist
@@ -2521,21 +2990,28 @@ else:
                 
                 # Validate process types
                 valid_processes = ["满花局花绣花", "满花局花", "满花绣花", "局花绣花", "满花", "局花", "绣花", "无印绣"]
-                invalid_processes = df[~df['工序'].isin(valid_processes)]['工序'].unique()
-
-                # Validate companies
-                valid_companies = ["龙兵", "贝贝"]
-                invalid_companies = df[~df['公司'].isin(valid_companies)]['公司'].unique()
+                valid_processes_bushu = ["满花局花绣花", "满花局花", "满花绣花", "局花绣花", "满花", "局花", "绣花"]
+                valid_production_mode = ["龙兵", "贝贝", "补数"]
+                invalid_production_mode = df[~df['排产模式'].isin(valid_production_mode)]['排产模式'].unique()
+                invalid_processes = []
+                for idx, row in df.iterrows():
+                    production_mode = row['排产模式']
+                    process = row['工序']
+                    if production_mode == '补数' and process not in valid_processes_bushu:
+                        invalid_processes.append(process)
+                    elif production_mode in ['龙兵', '贝贝'] and process not in valid_processes:
+                        invalid_processes.append(process)
+                invalid_processes = list(set(invalid_processes))
                 
                 if len(invalid_processes) > 0:
                     st.error(f"发现无效的工序类型：{', '.join(invalid_processes)}")
-                elif len(invalid_companies) > 0:
-                    st.error(f"发现无效的公司：{', '.join(invalid_companies)}")
+                elif len(invalid_production_mode) > 0:
+                    st.error(f"发现无效的排产模式：{', '.join(invalid_production_mode)}")
                 else:
                     # 检查"生产顺序"列是否存在
                     has_production_order = '生产顺序' in df.columns
                     if has_production_order:
-                        st.success("检测到'生产顺序'列，将根据此列对同一生产组内的款式进行排序。")
+                        st.success("检测到'生产顺序'列，将根据此列对同一生产班组内的款式进行排序。")
                         
                     # Add new styles from Excel
                     new_styles = []
@@ -2546,9 +3022,9 @@ else:
                         production_order = int(row['生产顺序']) if '生产顺序' in df.columns and pd.notna(row['生产顺序']) else 1
 
                         try:
-                            cycle_value = int(row['确认周转周期'])
+                            cycle_value = int(row['确认用时'])
                         except (ValueError, TypeError):
-                            cycle_value = str(row['确认周转周期'])
+                            cycle_value = str(row['确认用时'])
                         new_style = {
                             "style_number": str(row['款号']),
                             "sewing_start_date": row['缝纫开始日期'],
@@ -2557,10 +3033,13 @@ else:
                             "cycle": cycle_value,
                             "order_quantity": int(row['订单数量']),
                             "daily_production": int(row['日产量']),
-                            "production_group": str(row['生产组']),
+                            "production_group": str(row['生产班组']),
                             "production_order": production_order,
-                            "company": str(row['公司'])
+                            "company": str(row['客户']),
+                            "production_mode": str(row['排产模式'])
                         }
+                        if '交期' in df.columns and pd.notna(row['交期']):
+                            new_style["delivery_date"] = pd.to_datetime(row['交期']).date()
                         new_styles.append(new_style)
                     
                     if st.button("添加Excel中的款号"):
@@ -2571,12 +3050,6 @@ else:
                         })
                         st.success(f"已从Excel添加 {len(new_styles)} 个款号")
                         st.rerun()
-                    # st.session_state["all_styles"].extend(new_styles)
-                    # save_user_data(st.session_state["current_user"], {
-                    #     "all_styles": st.session_state["all_styles"]
-                    # })
-                    # st.success(f"已从Excel添加 {len(new_styles)} 个款号")
-                    # st.rerun()
         
         except Exception as e:
             st.error(f"读取Excel文件时出错：{str(e)}")
@@ -2587,84 +3060,34 @@ else:
         # 批量输入款号，每行一个
         style_numbers = st.text_area("请输入款号(每行一个):", "")
         sewing_start_date = st.date_input("请选择缝纫开始日期:", min_value=datetime.today().date())
+        # 新增交期（可选）
+        delivery_date = st.date_input("交期 (可选)", value=None, min_value=None, key="delivery_date_optional")
 
         # 添加上午/下午选择
         col1, col2, col3 = st.columns(3)
         with col1:
             start_time_period = st.selectbox("缝纫开始时间:", ["上午", "下午"])
-        # with col2:
-        #     selected_company = st.selectbox("请选择公司:", ["龙兵", "贝贝"])
-        # with col3:
-        #     # Define process options based on company
-        #     process_options = {
-        #         "龙兵": ["满花局花绣花", "满花局花", "满花绣花", "局花绣花", "满花", "局花", "绣花"],
-        #         "贝贝": ["满花局花绣花", "满花局花", "满花绣花", "局花绣花", "满花", "局花", "绣花", "无印绣"]
-        #     }
-        #     selected_process = st.selectbox("请选择工序:", process_options[selected_company])
         with col2:
-            # Initialize session state for company if not exists
-            if 'selected_company' not in st.session_state:
-                st.session_state.selected_company = "龙兵"
-            
-            # Update company selection
-            selected_company = st.selectbox(
-                "请选择公司:", 
-                ["龙兵", "贝贝"],
-                key="company_selector"
-            )
-            # Update session state
-            st.session_state.selected_company = selected_company
-            
+            # 排产模式 selectbox
+            production_mode = st.selectbox("排产模式:", ["龙兵", "贝贝", "补数"], key="production_mode_selector")
         with col3:
-            # Define process options based on company
-            process_options = {
-                "龙兵": ["满花局花绣花", "满花局花", "满花绣花", "局花绣花", "满花", "局花", "绣花"],
-                "贝贝": ["满花局花绣花", "满花局花", "满花绣花", "局花绣花", "满花", "局花", "绣花", "无印绣"]
-            }
-            selected_process = st.selectbox(
-                "请选择工序:", 
-                process_options[st.session_state.selected_company],
-                key="process_selector"
-            )
+            customer = st.text_input("客户 (可自由填写)", "")
         
         # 添加新字段
         order_quantity = st.number_input("订单数量:", min_value=1, value=100)
         daily_production = st.number_input("日产量:", min_value=1, value=50)
-        production_group = st.text_input("生产组号:", "")
-        production_order = st.number_input("生产顺序:", min_value=1, value=1, help="同一生产组内款式的生产顺序")
-        # 根据选择的公司显示不同的周期选项
-        cycle_options = get_cycle_options(selected_company)
-        cycle = st.selectbox("请选择确认周转周期:", cycle_options)
+        production_group = st.text_input("生产班组号:", "")
+        production_order = st.number_input("生产顺序:", min_value=1, value=1, help="同一生产班组内款式的生产顺序")
+        # 根据选择的客户显示不同的周期选项
+        cycle_options = get_cycle_options(production_mode)
+        cycle = st.selectbox("请选择确认用时:", cycle_options)
         
         submitted = st.form_submit_button("添加款号")
         if submitted and style_numbers:
-            # # 分割多行输入，去除空行和空格
-            # new_style_numbers = [s.strip() for s in style_numbers.split('\n') if s.strip()]
-            
-            # # 添加新的款号信息
-            # for style_number in new_style_numbers:
-            #     new_style = {
-            #         "style_number": style_number,
-            #         "sewing_start_date": sewing_start_date,
-            #         "start_time_period": start_time_period,  # 新增上午/下午字段
-            #         "process_type": selected_process,
-            #         "cycle": cycle,
-            #         "order_quantity": order_quantity,
-            #         "daily_production": daily_production,
-            #         "production_group": production_group,
-            #         "production_order": production_order,
-            #         "company": company
-            #     }
-            #     st.session_state["all_styles"].append(new_style)
-            # # Auto-save after adding styles
-            # save_user_data(st.session_state["current_user"], {
-            #     "all_styles": st.session_state["all_styles"]
-            # })
-            # st.success(f"已添加 {len(new_style_numbers)} 个款号")
             try:
                 # Validate cycle value
-                cycle_value = validate_cycle(selected_company, cycle)
-                cycle_value = convert_cycle_to_int(selected_company, cycle_value)
+                cycle_value = validate_cycle(production_mode, cycle)
+                cycle_value = convert_cycle_to_int(production_mode, cycle_value)
                 
                 # 分割多行输入，去除空行和空格
                 new_style_numbers = [s.strip() for s in style_numbers.split('\n') if s.strip()]
@@ -2676,13 +3099,16 @@ else:
                         "sewing_start_date": sewing_start_date,
                         "start_time_period": start_time_period,
                         "process_type": selected_process,
-                        "company": selected_company,
+                        "production_mode": production_mode,
+                        "customer": customer,
                         "cycle": cycle_value,
                         "order_quantity": order_quantity,
                         "daily_production": daily_production,
                         "production_group": production_group,
                         "production_order": production_order
                     }
+                    if delivery_date:
+                        new_style["delivery_date"] = delivery_date
                     st.session_state["all_styles"].append(new_style)
                 # Auto-save after adding styles
                 save_user_data(st.session_state["current_user"], {
@@ -2705,7 +3131,7 @@ else:
                 st.write(f"{idx + 1}. 款号: {style['style_number']}, 工序: {style['process_type']}, " 
                     f"缝纫开始日期: {style['sewing_start_date']} {time_period}, 周期: {style['cycle']}, "
                     f"订单数量: {style.get('order_quantity', '-')}, 日产量: {style.get('daily_production', '-')}, "
-                    f"生产组号: {style.get('production_group', '-')}, 生产顺序: {production_order}", f"公司: {style.get('company', '-')}")
+                    f"生产班组号: {style.get('production_group', '-')}, 生产顺序: {production_order}", f"客户: {style.get('company', '-')}")
             with col2:
                 if st.button("删除", key=f"delete_{idx}"):
                     st.session_state["all_styles"].pop(idx)
@@ -2729,11 +3155,11 @@ else:
         st.subheader("生成图表")
 
         # 添加连续排产逻辑说明
-        with st.expander("📋 查看生产组连续排产逻辑说明"):
+        with st.expander("📋 查看生产班组连续排产逻辑说明"):
             st.markdown("""
-            ### 生产组连续排产逻辑
+            ### 生产班组连续排产逻辑
             
-            系统按以下规则处理同一生产组内的款式排产:
+            系统按以下规则处理同一生产班组内的款式排产:
             
             1. **同一生产顺序的款式**:
                - 共享相同的缝纫开始日期和时段（上午/下午）
@@ -2751,26 +3177,26 @@ else:
                - 相同生产顺序的款式将在同一天同一时段开始，可能在不同时间结束
             """)
         
-        enable_sequential_production = st.checkbox("启用生产组连续排产功能", value=True, 
-                                            help="启用后，同一生产组内，下一个生产顺序(production_order)的款式将从前一个生产顺序中最晚完成的款式结束时间开始")
+        enable_sequential_production = st.checkbox("启用生产班组连续排产功能", value=True, 
+                                            help="启用后，同一生产班组内，下一个生产顺序(production_order)的款式将从前一个生产顺序中最晚完成的款式结束时间开始")
         
         # 添加预览按钮
-        if enable_sequential_production and st.button("预览生产组排产结果"):
-            # 重新安排同一生产组内款式的缝纫开始时间
+        if enable_sequential_production and st.button("预览生产班组排产结果"):
+            # 重新安排同一生产班组内款式的缝纫开始时间
             preview_styles = rearrange_styles_by_production_group(st.session_state["all_styles"])
             
-            # 按生产组分组显示排产结果
+            # 按生产班组分组显示排产结果
             grouped_styles = {}
             for style in preview_styles:
-                group = style.get("production_group", "无生产组")
+                group = style.get("production_group", "无生产班组")
                 if group not in grouped_styles:
                     grouped_styles[group] = []
                 grouped_styles[group].append(style)
             
-            # 显示每个生产组的排产结果
+            # 显示每个生产班组的排产结果
             for group, styles in grouped_styles.items():
-                if group != "无生产组":
-                    st.write(f"### 生产组: {group}")
+                if group != "无生产班组":
+                    st.write(f"### 生产班组: {group}")
                     
                     # 按生产顺序进一步分组
                     order_grouped_styles = {}
@@ -2804,8 +3230,8 @@ else:
                             # 计算缝纫结束时间
                             sewing_start_time = datetime.combine(style["sewing_start_date"], datetime.min.time())
                             start_time_period = style.get("start_time_period", "上午")
-                            company = style["company"]
-                            if company == '龙兵':
+                            production_mode = style["production_mode"]
+                            if production_mode == '龙兵':
                                 schedule = calculate_schedule(
                                     sewing_start_time, 
                                     style["process_type"], 
@@ -2814,7 +3240,7 @@ else:
                                     style["daily_production"],
                                     start_time_period
                                 )
-                            else:
+                            elif production_mode == '贝贝':
                                 schedule = calculate_schedule_beibei(
                                         sewing_start_time, 
                                         style["process_type"], 
@@ -2823,6 +3249,17 @@ else:
                                         style["daily_production"],
                                         start_time_period
                                     )
+                            elif production_mode == '补数':
+                                schedule = calculate_schedule_bushu(
+                                        sewing_start_time, 
+                                        style["process_type"], 
+                                        style["cycle"], 
+                                        style["order_quantity"], 
+                                        style["daily_production"],
+                                        start_time_period
+                                    )
+                            else:
+                                raise ValueError(f"Invalid production_mode: {production_mode}")
                             
                             sewing_end_time = schedule["缝纫"]["缝纫结束"]["时间点"]
                             sewing_end_remark = schedule["缝纫"]["缝纫结束"].get("备注", "")
@@ -2835,7 +3272,7 @@ else:
                                 "订单数量": style["order_quantity"],
                                 "日产量": style["daily_production"],
                                 "生产天数": round(style["order_quantity"] * 1.05 / style["daily_production"], 1),
-                                "公司": style["company"]
+                                "客户": style["company"]
                             })
                         
                         # 显示表格
@@ -2849,8 +3286,8 @@ else:
                         for style in order_styles:
                             sewing_start_time = datetime.combine(style["sewing_start_date"], datetime.min.time())
                             start_time_period = style.get("start_time_period", "上午")
-                            company = style["company"]
-                            if company == '龙兵':
+                            production_mode = style["production_mode"]
+                            if production_mode == '龙兵':
                                 schedule = calculate_schedule(
                                     sewing_start_time, 
                                     style["process_type"], 
@@ -2859,7 +3296,7 @@ else:
                                     style["daily_production"],
                                     start_time_period
                                 )
-                            else:
+                            elif production_mode == '贝贝':
                                 schedule = calculate_schedule_beibei(
                                         sewing_start_time, 
                                         style["process_type"], 
@@ -2868,6 +3305,17 @@ else:
                                         style["daily_production"],
                                         start_time_period
                                     )
+                            elif production_mode == '补数':
+                                schedule = calculate_schedule_bushu(
+                                        sewing_start_time, 
+                                        style["process_type"], 
+                                        style["cycle"], 
+                                        style["order_quantity"], 
+                                        style["daily_production"],
+                                        start_time_period
+                                    )
+                            else:
+                                raise ValueError(f"Invalid production_mode: {production_mode}")
                         
                             
                             end_time = schedule["缝纫"]["缝纫结束"]["时间点"]
@@ -2888,11 +3336,11 @@ else:
                         if len(order_styles) > 1:
                             st.info(f"⚠️ 注意：该生产顺序组中，款号 **{latest_style}** 的缝纫结束时间最晚：**{latest_end_time.date()} ({latest_end_remark})**，下一个生产顺序组将从此时间开始。")
             
-            # 显示无生产组的款式
-            if "无生产组" in grouped_styles and grouped_styles["无生产组"]:
-                st.write("### 无生产组的款式")
+            # 显示无生产班组的款式
+            if "无生产班组" in grouped_styles and grouped_styles["无生产班组"]:
+                st.write("### 无生产班组的款式")
                 no_group_data = []
-                for style in grouped_styles["无生产组"]:
+                for style in grouped_styles["无生产班组"]:
                     no_group_data.append({
                         "生产顺序": style.get("production_order", "-"),
                         "款号": style["style_number"],
@@ -2904,13 +3352,13 @@ else:
                     })
                 st.table(no_group_data)
                 
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         
         with col1:
             if st.button("生成所有生产流程图"):
                 # 根据用户选择决定是否重新排序
                 if enable_sequential_production:
-                    # 重新安排同一生产组内款式的缝纫开始时间
+                    # 重新安排同一生产班组内款式的缝纫开始时间
                     styles_to_process = rearrange_styles_by_production_group(st.session_state["all_styles"])
                 else:
                     styles_to_process = st.session_state["all_styles"]
@@ -2921,8 +3369,8 @@ else:
                     for style in styles_to_process:
                         sewing_start_time = datetime.combine(style["sewing_start_date"], datetime.min.time())
                         start_time_period = style.get("start_time_period", "上午")  # 获取上午/下午信息
-                        company = style["company"]
-                        if company == '龙兵':
+                        production_mode = style["production_mode"]
+                        if production_mode == '龙兵':
                             schedule = calculate_schedule(
                                 sewing_start_time, 
                                 style["process_type"], 
@@ -2931,7 +3379,7 @@ else:
                                 style["daily_production"],
                                 start_time_period
                             )
-                        else:
+                        elif production_mode == '贝贝':
                             schedule = calculate_schedule_beibei(
                                     sewing_start_time, 
                                     style["process_type"], 
@@ -2940,8 +3388,19 @@ else:
                                     style["daily_production"],
                                     start_time_period
                                 )
+                        elif production_mode == '补数':
+                            schedule = calculate_schedule_bushu(
+                                    sewing_start_time, 
+                                    style["process_type"], 
+                                    style["cycle"], 
+                                    style["order_quantity"], 
+                                    style["daily_production"],
+                                    start_time_period
+                                )
+                        else:
+                            raise ValueError(f"Invalid production_mode: {production_mode}")
                             
-                        # 设置当前款号和生产组用于标题显示
+                        # 设置当前款号和生产班组用于标题显示
                         st.session_state["style_number"] = style["style_number"]
                         st.session_state["production_group"] = style.get("production_group", "")
                         fig = plot_timeline(schedule, style["process_type"], style["cycle"])
@@ -2977,7 +3436,7 @@ else:
             if st.button("生成部门时间线图"):
                 # 根据用户选择决定是否重新排序
                 if enable_sequential_production:
-                    # 重新安排同一生产组内款式的缝纫开始时间
+                    # 重新安排同一生产班组内款式的缝纫开始时间
                     styles_to_process = rearrange_styles_by_production_group(st.session_state["all_styles"])
                 else:
                     styles_to_process = st.session_state["all_styles"]
@@ -2996,7 +3455,7 @@ else:
         #     if st.button("生成Excel报表"):
         #         # 根据用户选择决定是否重新排序
         #         if enable_sequential_production:
-        #             # 重新安排同一生产组内款式的缝纫开始时间
+        #             # 重新安排同一生产班组内款式的缝纫开始时间
         #             styles_to_process = rearrange_styles_by_production_group(st.session_state["all_styles"])
         #         else:
         #             styles_to_process = st.session_state["all_styles"]
@@ -3016,7 +3475,7 @@ else:
             if st.button("生成Excel报表"):
                 # 根据用户选择决定是否重新排序
                 if enable_sequential_production:
-                    # 重新安排同一生产组内款式的缝纫开始时间
+                    # 重新安排同一生产班组内款式的缝纫开始时间
                     styles_to_process = rearrange_styles_by_production_group(st.session_state["all_styles"])
                 else:
                     styles_to_process = st.session_state["all_styles"]
@@ -3026,11 +3485,32 @@ else:
                 
                 # 提供Excel文件下载
                 with open(excel_path, "rb") as f:
+                        st.download_button(
+                            label="下载Excel报表",
+                            data=f,
+                            file_name="生产计划报表.xlsx",
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        )
+        
+        with col4:
+            if st.button("生成部门Excel报表"):
+                # 根据用户选择决定是否重新排序
+                if enable_sequential_production:
+                    # 重新安排同一生产班组内款式的缝纫开始时间
+                    styles_to_process = rearrange_styles_by_production_group(st.session_state["all_styles"])
+                else:
+                    styles_to_process = st.session_state["all_styles"]
+                
+                # 生成部门Excel报表
+                excel_path = generate_department_wise_excel(styles_to_process)
+                
+                # 提供Excel文件下载
+                with open(excel_path, "rb") as f:
                     st.download_button(
-                        label="下载Excel报表",
+                        label="下载部门Excel报表（ZIP文件）",
                         data=f,
-                        file_name="生产计划报表.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        file_name="部门生产计划报表.zip",
+                        mime="application/zip"
                     )
 
     # 调整生产流程部分保持不变
